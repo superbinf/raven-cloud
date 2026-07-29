@@ -1,0 +1,17 @@
+{
+  "name": "@sentinel/ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "dependencies": {
+    "@sentinel/shared": "*",
+    "lucide-react": "^0.468.0"
+  },
+  "exports": {
+    ".": "./src/index.tsx",
+    "./styles.css": "./src/styles.css"
+  }
+}

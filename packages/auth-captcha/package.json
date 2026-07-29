@@ -1,0 +1,12 @@
+{
+  "name": "@sentinel/auth-captcha",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  }
+}

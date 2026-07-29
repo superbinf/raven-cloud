@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sentinel Threat Intelligence Eye">
+  <path d="M2 32C10 18 20 10 32 10s22 8 30 22c-8 14-18 22-30 22S10 46 2 32Z" fill="#5F87FF"/>
+  <path d="M2 32c8 14 18 22 30 22s22-8 30-22c-8 10-18 16-30 16S10 42 2 32Z" fill="#78E6EF"/>
+  <path d="M9 32c6-9 14-14 23-14s17 5 23 14c-6 9-14 14-23 14S15 41 9 32Z" fill="#07111F"/>
+  <circle cx="32" cy="32" r="13" fill="#78E6EF"/>
+  <circle cx="32" cy="32" r="8" fill="#020713"/>
+  <circle cx="32" cy="32" r="3" fill="#EDF5FF"/>
+  <circle cx="42" cy="23" r="3" fill="#F06A7C"/>
+</svg>

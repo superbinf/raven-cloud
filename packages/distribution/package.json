@@ -1,0 +1,23 @@
+{
+  "name": "@sentinel/distribution",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs"
+    },
+    "./test-vector": {
+      "types": "./src/test-vector.d.ts",
+      "import": "./src/test-vector.mjs"
+    }
+  },
+  "dependencies": {
+    "@sentinel/contracts": "*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck src/index.d.ts src/test-vector.d.ts",
+    "test": "node --test test/*.test.mjs"
+  }
+}

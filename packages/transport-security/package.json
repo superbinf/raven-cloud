@@ -1,0 +1,19 @@
+{
+  "name": "@sentinel/transport-security",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 --skipLibCheck src/index.d.ts",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "^0.8.13"
+  }
+}

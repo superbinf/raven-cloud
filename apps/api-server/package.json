@@ -1,0 +1,36 @@
+{
+  "name": "@sentinel/api-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.mjs",
+    "dev:worker": "node --watch src/worker.mjs",
+    "start": "node src/server.mjs",
+    "start:worker": "node src/worker.mjs",
+    "start:worker:scheduler": "node src/worker.mjs --role=scheduler",
+    "start:worker:snapshot": "node src/worker.mjs --role=snapshot",
+    "start:worker:io": "node src/worker.mjs --role=io",
+    "start:worker:maintenance": "node src/worker.mjs --role=maintenance",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:seed:fingerprint-icons": "node scripts/seed-fingerprint-icons.mjs",
+    "db:migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@sentinel/auth-captcha": "*",
+    "@sentinel/contracts": "*",
+    "@sentinel/distribution": "*",
+    "@sentinel/file-preview": "*",
+    "@sentinel/transport-security": "*",
+    "bullmq": "^5.80.9",
+    "ioredis": "^5.11.1",
+    "mammoth": "^1.10.0",
+    "parse5": "^8.0.1",
+    "pg": "^8.16.3",
+    "sharp": "0.35.3",
+    "simple-icons": "^16.26.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "yauzl": "^3.2.0"
+  }
+}
