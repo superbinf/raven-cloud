@@ -126,7 +126,7 @@ export function TargetsPage({
     <>
       <PageHeader
         eyebrow="KEYWORD & DOMAIN SCOPE"
-        title="关键词与域名配置"
+        title="监测范围"
         description="仅维护当前客户的关键词监控与域名范围。"
         actions={
           canManage ? (

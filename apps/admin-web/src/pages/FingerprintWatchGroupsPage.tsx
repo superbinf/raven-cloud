@@ -290,7 +290,7 @@ export function FingerprintWatchGroupsPage({
     <>
       <PageHeader
         eyebrow="VULNERABILITY CORRELATION"
-        title="指纹检测组配置"
+        title="指纹监测策略"
         description="系统自动同步资产监测中的应用和信息指纹；可在默认组中排除不需要监测的指纹，也可以新增自定义监测组。"
         actions={
           canManage ? (

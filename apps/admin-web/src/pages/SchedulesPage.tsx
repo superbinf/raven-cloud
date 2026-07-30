@@ -270,7 +270,7 @@ export function SchedulesPage() {
     <>
       <PageHeader
         eyebrow="BACKGROUND TASK PLATFORM"
-        title="定时任务"
+        title="调度计划"
         description="管理云端系统调度和第三方采集计划；所有时间按北京时间执行，修改后无需重启 Worker。"
         actions={
           <Button
@@ -290,7 +290,7 @@ export function SchedulesPage() {
           <CalendarClock size={20} />
           <span>
             <strong>{scheduledTasks.length}</strong>
-            <small>系统定时任务</small>
+            <small>系统调度任务</small>
           </span>
         </div>
         <div>
@@ -318,7 +318,7 @@ export function SchedulesPage() {
 
       {platform && (
         <Panel
-          title="平台定时任务"
+          title="平台调度任务"
           action={<Tag>{enabledSchedules} 个启用</Tag>}
         >
           <div className="admin-table background-task-table">
@@ -548,7 +548,7 @@ export function SchedulesPage() {
                 defaultChecked={editingSchedule.enabled}
               />
               <span />
-              <em>启用该定时任务</em>
+              <em>启用该调度任务</em>
             </label>
             <p className="form-help">
               保存后重新计算下次执行时间，并在下一次调度心跳中生效；手动执行请前往任务中心。

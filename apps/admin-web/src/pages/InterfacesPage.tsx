@@ -310,7 +310,7 @@ export function InterfacesPage({
     <>
       <PageHeader
         eyebrow="DATA CONNECTORS"
-        title="接口配置"
+        title="数据源接口"
         description="统一管理当前客户的数据源连接、开放 API、配额和调用健康度。"
         actions={
           <>
@@ -744,7 +744,7 @@ export function InterfacesPage({
             </>
           )}
           <p className="form-help">
-            连接器决定认证方式、请求协议和入库适配器；接口实例只保存地址、密钥和查询参数。定时周期在“定时任务”中单独配置。
+            连接器决定认证方式、请求协议和入库适配器；接口实例只保存地址、密钥和查询参数。定时周期在“调度计划”中单独配置。
           </p>
           {testResult && (
             <div

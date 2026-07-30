@@ -161,6 +161,13 @@ export function AdminRouter() {
   const allowed = (permission: Permission, element: ReactNode) => session?.user.permissions.includes(permission) ? element : <Navigate to="/admin" replace />;
   const canTargets = Boolean(session?.user.permissions.includes("targets:manage"));
   const canSources = Boolean(session?.user.permissions.includes("sources:manage"));
+  const managementLanding = session?.user.permissions.includes("targets:read")
+    ? "/admin/management/customers"
+    : session?.user.permissions.includes("accounts:manage")
+      ? "/admin/management/users"
+      : session?.user.permissions.includes("ingestion:manage")
+        ? "/admin/management/fingerprint-library"
+        : "/admin";
 
   if (checkingSession || shouldLoadCustomerScope) return <PlatformLoading />;
 
@@ -186,18 +193,18 @@ export function AdminRouter() {
           <Route path="fingerprint-watch-groups" element={allowed("targets:read", <ScopedFingerprintWatchGroups canManage={canTargets} />)} />
         </Route>
       </Route>
-      <Route path="data-operations/fingerprint-library" element={allowed("ingestion:manage", <FingerprintIconsPage />)} />
       <Route path="operations/credentials" element={allowed("operations:manage", <ScopedDeploymentCredentials />)} />
       <Route path="operations/edge-deployments" element={allowed("operations:manage", <ScopedEdgeDeployments />)} />
       <Route path="operations/tasks" element={allowed("operations:manage", <TaskCenterPage />)} />
       <Route path="operations/schedules" element={allowed("operations:manage", <SchedulesPage />)} />
       <Route path="operations/status" element={allowed("operations:manage", <OperationsStatusPage />)} />
       <Route path="operations/publication-policies" element={allowed("ingestion:manage", <ScopedPublicationPolicies />)} />
-      <Route path="management" element={<Navigate to="users" replace />} />
+      <Route path="management" element={<Navigate to={managementLanding} replace />} />
       <Route path="management/customers" element={allowed("targets:read", <CustomersPage tenants={customerScope?.tenants ?? []} canManage={canTargets} onChanged={(tenants) => setCustomerScope({ tenants, error: "" })} />)} />
       <Route path="management/users" element={allowed("accounts:manage", <AccountsPage currentAccount={session?.user.account || ""} onCurrentSessionRevoked={logout} />)} />
       <Route path="management/password-policy" element={allowed("accounts:manage", <PasswordPolicyPage />)} />
       <Route path="management/audit" element={allowed("accounts:manage", <AuditPage context="all" />)} />
+      <Route path="management/fingerprint-library" element={allowed("ingestion:manage", <FingerprintIconsPage />)} />
       <Route path="profile" element={<ProfilePage onProfileUpdated={updateSessionUser} />} />
 
       <Route path="customers" element={<Navigate to="../customer-operations/scope" replace />} />
@@ -212,7 +219,8 @@ export function AdminRouter() {
       <Route path="vulnerabilities" element={<Navigate to="../customer-operations/ingestion/vulnerabilities" replace />} />
       <Route path="ingestion/*" element={<Navigate to="../customer-operations/ingestion/sensitive" replace />} />
       <Route path="edge-deployments" element={<Navigate to="../operations/edge-deployments" replace />} />
-      <Route path="operations/fingerprint-icons" element={<Navigate to="/admin/data-operations/fingerprint-library" replace />} />
+      <Route path="data-operations/fingerprint-library" element={<Navigate to="/admin/management/fingerprint-library" replace />} />
+      <Route path="operations/fingerprint-icons" element={<Navigate to="/admin/management/fingerprint-library" replace />} />
       <Route path="ai" element={<Navigate to="../" replace />} />
     </Route>
     <Route path="/" element={<Navigate to="/admin" replace />} />

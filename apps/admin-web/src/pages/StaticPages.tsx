@@ -108,8 +108,8 @@ export function AuditPage({ context = "operations" }: { context?: AuditContext }
   return <>
     <PageHeader
       eyebrow="AUDIT TRAIL"
-      title="日志审计"
-      description={allContexts ? "集中查询运营平台与管理后台的登录、配置、数据和发布操作。" : management ? "查询用户、角色、登录和管理配置变更记录。" : "查询客户配置、数据接入、发布和运营管理记录。"}
+      title="操作审计"
+      description={allContexts ? "集中查询运营平台与管理后台的登录、配置、数据和发布操作。" : management ? "查询用户、角色、登录和管理配置变更记录。" : "查询监测采集、情报运营、发布交付和运行保障记录。"}
       actions={<Button variant="secondary" onClick={() => setRefreshKey((value) => value + 1)} disabled={loading}><RefreshCw size={16} />{loading ? "刷新中..." : "刷新"}</Button>}
     />
     <div className="audit-summary" aria-label="审计日志统计">

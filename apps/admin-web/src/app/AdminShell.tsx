@@ -18,37 +18,45 @@ type NavItem = { to: string; label: string; icon: typeof CircleGauge; end?: bool
 type WorkspaceMode = "operations" | "management";
 
 const operationsNav: Array<{ label: string; items: NavItem[] }> = [
-  { label: "工作台", items: [{ to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true }] },
-  { label: "数据接入", items: [
-    { to: "/admin/customer-operations/scope", label: "关键词与域名配置", icon: Globe2, permission: "targets:read" },
-    { to: "/admin/customer-operations/interfaces", label: "接口配置", icon: Webhook, permission: "sources:read" }
+  { label: "工作台", items: [
+    { to: "/admin", label: "运营总览", icon: LayoutDashboard, end: true },
+    { to: "/admin/tenant-portal", label: "客户 Portal", icon: Eye, permission: "ingestion:manage" }
   ] },
-  { label: "数据运营", items: [
+  { label: "监测与采集", items: [
+    { to: "/admin/customer-operations/scope", label: "监测范围", icon: Globe2, permission: "targets:read" },
+    { to: "/admin/customer-operations/fingerprint-watch-groups", label: "指纹监测策略", icon: Fingerprint, permission: "targets:read" },
+    { to: "/admin/customer-operations/interfaces", label: "数据源接口", icon: Webhook, permission: "sources:read" }
+  ] },
+  { label: "情报运营", items: [
     { to: "/admin/customer-operations/ingestion/sensitive", label: "敏感信息", icon: FileInput, permission: "ingestion:manage" },
     { to: "/admin/customer-operations/ingestion/assets", label: "资产信息", icon: Database, permission: "ingestion:manage" },
     { to: "/admin/customer-operations/ingestion/dark-web", label: "暗网情报", icon: Archive, permission: "ingestion:manage" },
     { to: "/admin/customer-operations/ingestion/credentials", label: "账号凭据", icon: KeyRound, permission: "ingestion:manage" },
-    { to: "/admin/customer-operations/ingestion/vulnerabilities", label: "漏洞情报", icon: Bug, permission: "ingestion:manage" },
-    { to: "/admin/tenant-portal", label: "客户 Portal", icon: Eye, permission: "ingestion:manage" },
-    { to: "/admin/customer-operations/fingerprint-watch-groups", label: "重点指纹监测", icon: Fingerprint, permission: "targets:read" },
-    { to: "/admin/data-operations/fingerprint-library", label: "指纹识别库", icon: ImageIcon, permission: "ingestion:manage" }
+    { to: "/admin/customer-operations/ingestion/vulnerabilities", label: "漏洞情报", icon: Bug, permission: "ingestion:manage" }
   ] },
-  { label: "运营管理", items: [
-    { to: "/admin/operations/credentials", label: "部署凭据", icon: KeyRound, permission: "operations:manage" },
+  { label: "发布与交付", items: [
+    { to: "/admin/operations/publication-policies", label: "发布策略", icon: SlidersHorizontal, permission: "ingestion:manage" },
     { to: "/admin/operations/edge-deployments", label: "地端部署", icon: HardDrive, permission: "operations:manage" },
+    { to: "/admin/operations/credentials", label: "许可证与 API Key", icon: KeyRound, permission: "operations:manage" }
+  ] },
+  { label: "运行保障", items: [
     { to: "/admin/operations/tasks", label: "任务中心", icon: ListTodo, permission: "operations:manage" },
-    { to: "/admin/operations/schedules", label: "定时任务", icon: Clock3, permission: "operations:manage" },
-    { to: "/admin/operations/status", label: "状态监控", icon: Activity, permission: "operations:manage" },
-    { to: "/admin/operations/publication-policies", label: "发布策略", icon: SlidersHorizontal, permission: "ingestion:manage" }
+    { to: "/admin/operations/schedules", label: "调度计划", icon: Clock3, permission: "operations:manage" },
+    { to: "/admin/operations/status", label: "运行状态", icon: Activity, permission: "operations:manage" }
   ] }
 ];
 
 const managementNav: Array<{ label: string; items: NavItem[] }> = [
-  { label: "平台管理", items: [
+  { label: "客户与权限", items: [
     { to: "/admin/management/customers", label: "客户管理", icon: Building2, permission: "targets:read" },
-    { to: "/admin/management/users", label: "用户配置", icon: Users, permission: "accounts:manage" },
+    { to: "/admin/management/users", label: "用户与角色", icon: Users, permission: "accounts:manage" }
+  ] },
+  { label: "安全与审计", items: [
     { to: "/admin/management/password-policy", label: "密码策略", icon: LockKeyhole, permission: "accounts:manage" },
-    { to: "/admin/management/audit", label: "日志审计", icon: Archive, permission: "accounts:manage" }
+    { to: "/admin/management/audit", label: "操作审计", icon: Archive, permission: "accounts:manage" }
+  ] },
+  { label: "平台基础能力", items: [
+    { to: "/admin/management/fingerprint-library", label: "指纹识别库", icon: ImageIcon, permission: "ingestion:manage" }
   ] }
 ];
 
@@ -71,7 +79,7 @@ export function readAdminSession(): AdminSession | null {
 }
 
 function AdminBrand({ mode = "operations" }: { mode?: WorkspaceMode }) {
-  const home = mode === "management" ? "/admin/management/users" : "/admin";
+  const home = mode === "management" ? "/admin/management" : "/admin";
   const label = mode === "management" ? "云端管理后台" : "云端运营平台";
   return <Link to={home} className="admin-brand" aria-label={`SENTINEL ${label}首页`}><span><ShieldCheck size={22} /></span><div><strong>SENTINEL</strong><small>{label}</small></div></Link>;
 }
@@ -123,7 +131,7 @@ export function AdminLayout({ session, onLogout }: { session: AdminSession; onLo
   const navGroups = mode === "management" ? managementNav : operationsNav;
   const can = (permission?: Permission) => !permission || session.user.permissions.includes(permission);
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
-  const switchTarget = mode === "management" ? "/admin" : "/admin/management/users";
+  const switchTarget = mode === "management" ? "/admin" : "/admin/management";
   const switchLabel = mode === "management" ? "返回运营平台" : "进入管理后台";
   const tenantSearch = customerScope.tenantId ? `?tenant=${encodeURIComponent(customerScope.tenantId)}` : "";
   const showTenantSwitch = mode === "operations" && location.pathname !== "/admin/profile";
@@ -150,8 +158,8 @@ export function AdminLayout({ session, onLogout }: { session: AdminSession; onLo
 function currentPageLabel(path: string) {
   if (path.startsWith("/admin/customer-operations/ingestion/dark-web/editor/")) return "暗网正文编辑";
   const labels: Record<string, string> = {
-    "/admin": "Dashboard",
-    "/admin/customer-operations/customers": "客户管理", "/admin/customer-operations/scope": "关键词与域名配置", "/admin/customer-operations/interfaces": "接口配置",
+    "/admin": "运营总览",
+    "/admin/customer-operations/customers": "客户管理", "/admin/customer-operations/scope": "监测范围", "/admin/customer-operations/interfaces": "数据源接口",
     "/admin/customer-operations/ingestion/sensitive": "敏感信息",
     "/admin/customer-operations/ingestion/assets": "资产信息",
     "/admin/customer-operations/ingestion/dark-web": "暗网情报",
@@ -159,11 +167,11 @@ function currentPageLabel(path: string) {
     "/admin/customer-operations/ingestion/vulnerabilities": "漏洞情报",
     "/admin/customer-operations/publication-policies": "发布策略",
     "/admin/customer-operations/portal-preview": "客户 Portal",
-    "/admin/customer-operations/fingerprint-watch-groups": "重点指纹监测",
-    "/admin/operations/credentials": "部署凭据", "/admin/data-operations/fingerprint-library": "指纹识别库", "/admin/operations/fingerprint-icons": "指纹识别库", "/admin/operations/edge-deployments": "地端部署", "/admin/operations/tasks": "任务中心", "/admin/operations/schedules": "定时任务",
-    "/admin/operations/status": "状态监控", "/admin/operations/audit": "日志审计",
+    "/admin/customer-operations/fingerprint-watch-groups": "指纹监测策略",
+    "/admin/operations/credentials": "许可证与 API Key", "/admin/data-operations/fingerprint-library": "指纹识别库", "/admin/operations/fingerprint-icons": "指纹识别库", "/admin/operations/edge-deployments": "地端部署", "/admin/operations/tasks": "任务中心", "/admin/operations/schedules": "调度计划",
+    "/admin/operations/status": "运行状态", "/admin/operations/audit": "操作审计",
     "/admin/operations/publication-policies": "发布策略", "/admin/tenant-portal": "客户 Portal", "/admin/profile": "个人中心",
-    "/admin/management/customers": "客户管理", "/admin/management/users": "用户配置", "/admin/management/password-policy": "密码策略", "/admin/management/audit": "日志审计"
+    "/admin/management/customers": "客户管理", "/admin/management/users": "用户与角色", "/admin/management/password-policy": "密码策略", "/admin/management/audit": "操作审计", "/admin/management/fingerprint-library": "指纹识别库"
   };
   return labels[path] ?? "运营平台";
 }

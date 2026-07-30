@@ -34,7 +34,7 @@ export function OperationsStatusPage() {
   useEffect(() => { void load(); }, []);
   const abnormalConnections = connections.filter((item) => item.enabled && item.status !== "正常");
   return <>
-    <PageHeader eyebrow="OPERATIONS OBSERVABILITY" title="状态监控" description="集中查看任务队列、数据接口与最近运行状态。" actions={<Button variant="secondary" onClick={() => void load()} disabled={loading}><RefreshCw size={16} />{loading ? "刷新中..." : "刷新状态"}</Button>} />
+    <PageHeader eyebrow="OPERATIONS OBSERVABILITY" title="运行状态" description="集中查看任务队列、数据接口与最近运行状态。" actions={<Button variant="secondary" onClick={() => void load()} disabled={loading}><RefreshCw size={16} />{loading ? "刷新中..." : "刷新状态"}</Button>} />
     <section className="status-summary">
       <div><Activity size={19} /><span><small>近 1 小时成功率</small><strong>{overview?.observability.lastHour.successRate == null ? "--" : `${overview.observability.lastHour.successRate}%`}</strong></span></div>
       <div><Clock3 size={19} /><span><small>运行 / 等待</small><strong>{overview ? `${overview.queue.running} / ${overview.queue.pending}` : "--"}</strong></span></div>

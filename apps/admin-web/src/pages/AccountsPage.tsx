@@ -318,7 +318,7 @@ export function AccountsPage({
     <>
       <PageHeader
         eyebrow="IDENTITY & ACCESS"
-        title="用户配置"
+        title="用户与角色"
         description="统一配置平台管理员、情报分析师及其账号、角色和会话权限。"
         actions={
           <Button onClick={() => setEditing(null)}>

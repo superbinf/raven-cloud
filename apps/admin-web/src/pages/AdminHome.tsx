@@ -9,12 +9,12 @@ import {
   CloudCog,
   ContactRound,
   Database,
+  Eye,
   FileInput,
   Gauge,
   RefreshCw,
   Server,
-  ShieldCheck,
-  TimerReset
+  ShieldCheck
 } from "lucide-react";
 import { type AdminDashboardMetric, type AdminDashboardResult, type Permission } from "@sentinel/shared";
 import { Button, Panel, StatusDot, Tag } from "@sentinel/ui";
@@ -91,18 +91,18 @@ export function AdminHome({ permissions }: { permissions: Permission[] }) {
 
   const tenantSearch = tenantId ? `?tenant=${encodeURIComponent(tenantId)}` : "";
   const quickActions = [
-    can("targets:read") && { to: "/admin/customer-operations/scope", icon: ContactRound, label: "客户运营", detail: "关键词与域名配置" },
-    can("sources:read") && { to: "/admin/customer-operations/interfaces", icon: Cable, label: "接口配置", detail: "数据源与连接状态" },
-    can("ingestion:manage") && { to: "/admin/customer-operations/ingestion/sensitive", icon: FileInput, label: "数据接入", detail: "录入与批次管理" },
-    can("operations:manage") && { to: "/admin/operations/status", icon: Gauge, label: "状态监控", detail: "服务与组件运行态势" },
-    can("operations:manage") && { to: "/admin/operations/tasks", icon: TimerReset, label: "任务中心", detail: "任务执行与问题记录" }
+    can("targets:read") && { to: "/admin/customer-operations/scope", icon: ContactRound, label: "监测范围", detail: "关键词与域名配置" },
+    can("sources:read") && { to: "/admin/customer-operations/interfaces", icon: Cable, label: "数据源接口", detail: "连接配置与调用状态" },
+    can("ingestion:manage") && { to: "/admin/customer-operations/ingestion/sensitive", icon: FileInput, label: "情报运营", detail: "业务数据录入与审核" },
+    can("ingestion:manage") && { to: "/admin/tenant-portal", icon: Eye, label: "客户 Portal", detail: "以客户视角查看数据" },
+    can("operations:manage") && { to: "/admin/operations/status", icon: Gauge, label: "运行状态", detail: "服务与组件运行态势" }
   ].filter(Boolean).map((item) => item ? { ...item, to: `${item.to}${tenantSearch}` } : item) as Array<{ to: string; icon: ComponentType<{ size?: number }>; label: string; detail: string }>;
 
   return <>
     <PageHeader
       eyebrow="OPERATIONS OVERVIEW"
       title="运营工作台"
-      description="聚合数据接入、采集链路与平台运行状态。"
+      description="聚合监测采集、情报运营与平台运行状态。"
       actions={<>
         {updatedAt && <span className="dashboard-updated"><CheckCircle2 size={13} />更新于 {updatedAt.toLocaleTimeString("zh-CN", { hour12: false })}</span>}
         <Button variant="secondary" onClick={() => void load()} disabled={loading} aria-busy={loading}>

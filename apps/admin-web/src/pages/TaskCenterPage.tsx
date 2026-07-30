@@ -451,7 +451,7 @@ export function TaskCenterPage() {
       <PageHeader
         eyebrow="TASK OPERATIONS CENTER"
         title="任务中心"
-        description="优先处理失败、重试和运行异常；调度周期与启停配置请前往定时任务。"
+        description="优先处理失败、重试和运行异常；调度周期与启停配置请前往调度计划。"
         actions={
           <Button variant="secondary" onClick={() => void load()}>
             <RefreshCw size={17} />
@@ -574,7 +574,7 @@ export function TaskCenterPage() {
         >
           <div>
             <strong>任务定义</strong>
-            <span>在这里查看可执行任务；周期、启停和下次运行时间仍在定时任务配置。</span>
+            <span>在这里查看可执行任务；周期、启停和下次运行时间仍在调度计划中配置。</span>
           </div>
           <div className="run-view-actions" role="tablist" aria-label="任务定义类型">
             <button
@@ -790,7 +790,7 @@ export function TaskCenterPage() {
           <div className="inline-empty">
             <ListTodo size={26} />
             <strong>暂无第三方数据采集任务</strong>
-            <span>在定时任务中创建采集计划后，将在这里统一执行和观测。</span>
+            <span>在调度计划中创建采集计划后，将在这里统一执行和观测。</span>
           </div>
         )}
         <TablePagination
@@ -978,7 +978,7 @@ export function TaskCenterPage() {
                   ? "当前没有失败或部分成功告警。"
                   : runView === "active"
                     ? "新任务被 Worker 领取后会自动出现在这里。"
-                    : "手动或定时任务被 Worker 领取后将在这里展示。"}
+                    : "手动或调度任务被 Worker 领取后将在这里展示。"}
             </span>
           </div>
         )}
@@ -1012,7 +1012,7 @@ export function TaskCenterPage() {
                 onClick={() => setRunDetail(null)}
               >
                 <Settings2 size={15} />
-                接口配置
+                数据源接口
               </Link>
             )}
             <Link
@@ -1021,7 +1021,7 @@ export function TaskCenterPage() {
               onClick={() => setRunDetail(null)}
             >
               <Clock3 size={15} />
-              定时任务
+              调度计划
             </Link>
             <Button
               onClick={() => void rerunCurrentDetail()}

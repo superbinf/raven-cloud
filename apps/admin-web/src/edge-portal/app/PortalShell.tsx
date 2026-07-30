@@ -106,7 +106,7 @@ export function PortalLayout({ session, enabledModules }: { session: PortalSessi
         <label className="cloud-portal-tenant"><Building2 size={15} /><select aria-label="切换当前客户" value={tenantId} onChange={(event) => changeTenant(event.target.value)}>{tenants.map((tenant) => <option key={tenant.id} value={tenant.id}>{tenant.name}</option>)}</select></label>
         <span className="cloud-portal-draft-status">含草稿</span>
         <ThemeSwitcher />
-        <a className="icon-button" aria-label="返回运营平台" title="返回运营平台" href={`/admin?tenant=${encodeURIComponent(tenantId)}`}><ArrowLeft size={18} /></a>
+        <a className="icon-button" aria-label="返回运营工作台" title="返回运营工作台" href={`/admin?tenant=${encodeURIComponent(tenantId)}`} target="_top"><ArrowLeft size={18} /></a>
         <a className="portal-session-user" href="/admin/profile" title="个人中心"><UserRound size={17} /><span>{session.name}</span></a>
         <IconButton label={open ? "关闭导航" : "打开导航"} className="menu-button" onClick={() => setOpen((value) => !value)}>{open ? <X size={20} /> : <Menu size={20} />}</IconButton>
       </div>
