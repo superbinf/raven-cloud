@@ -1,13 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
+  CheckCircle2,
   Clock3,
+  Copy,
   ListTodo,
   Play,
   RefreshCw,
+  RotateCcw,
+  Search,
+  Settings2,
   Workflow,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   type BackgroundRun,
   type BackgroundRunDetail,
@@ -83,6 +89,13 @@ function duration(value?: number | null) {
   return `${(value / 1_000).toFixed(value < 10_000 ? 1 : 0)}s`;
 }
 
+function waitingDuration(value?: number | null) {
+  if (value === null || value === undefined || value <= 0) return "暂无等待";
+  if (value < 60_000) return `最久 ${Math.max(1, Math.round(value / 1_000))} 秒`;
+  if (value < 3_600_000) return `最久 ${Math.round(value / 60_000)} 分钟`;
+  return `最久 ${(value / 3_600_000).toFixed(1)} 小时`;
+}
+
 const runState: Record<
   BackgroundRunState,
   { label: string; tone: "success" | "warning" | "danger" | "muted" }
@@ -134,12 +147,34 @@ function catalogRunIdentifier(task: BackgroundTask) {
   return task.taskIdentifier || task.identifier;
 }
 
+type TaskCenterView = "attention" | "active" | "all" | "definitions";
+type DefinitionView = "platform" | "collection";
+type RunStateFilter =
+  | "all"
+  | "running"
+  | "retrying"
+  | "failed"
+  | "partial"
+  | "succeeded";
+
+const viewLabels: Record<Exclude<TaskCenterView, "definitions">, string> = {
+  attention: "需关注",
+  active: "运行中",
+  all: "全部运行",
+};
+
 export function TaskCenterPage() {
   const [platform, setPlatform] = useState<BackgroundTaskOverview | null>(null);
   const [jobs, setJobs] = useState<CollectionJob[]>([]);
   const [runs, setRuns] = useState<BackgroundRun[]>([]);
   const [attentionRuns, setAttentionRuns] = useState<BackgroundRun[]>([]);
-  const [runView, setRunView] = useState<"recent" | "attention">("recent");
+  const [runView, setRunView] = useState<TaskCenterView>("attention");
+  const [definitionView, setDefinitionView] =
+    useState<DefinitionView>("platform");
+  const [runSearch, setRunSearch] = useState("");
+  const [stateFilter, setStateFilter] = useState<RunStateFilter>("all");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [triggerFilter, setTriggerFilter] = useState("all");
   const [runDetail, setRunDetail] = useState<BackgroundRunDetail | null>(null);
   const [loadingRunDetail, setLoadingRunDetail] = useState(false);
   const [running, setRunning] = useState<string | null>(null);
@@ -292,21 +327,131 @@ export function TaskCenterPage() {
     );
   const latestRunForJob = (jobId: string) =>
     runs.find((item) => item.collectionJobId === jobId) || null;
-  const displayedRuns = runView === "attention" ? attentionRuns : runs;
+  const activeRuns = useMemo(
+    () =>
+      runs.filter((item) =>
+        ["running", "retrying"].includes(item.state),
+      ),
+    [runs],
+  );
+  const baseDisplayedRuns =
+    runView === "attention"
+      ? attentionRuns
+      : runView === "active"
+        ? activeRuns
+        : runs;
+  const displayedRuns = useMemo(() => {
+    const keyword = runSearch.trim().toLocaleLowerCase("zh-CN");
+    return baseDisplayedRuns.filter((item) => {
+      const isPartial =
+        item.state === "succeeded" && Boolean(item.noticeMessage);
+      const matchesState =
+        stateFilter === "all" ||
+        (stateFilter === "partial"
+          ? isPartial
+          : stateFilter === "succeeded"
+            ? item.state === "succeeded" && !isPartial
+            : item.state === stateFilter);
+      const matchesRole =
+        roleFilter === "all" || item.queueRole === roleFilter;
+      const matchesTrigger =
+        triggerFilter === "all" || item.triggerType === triggerFilter;
+      const matchesSearch =
+        !keyword ||
+        [
+          item.taskLabel,
+          item.taskIdentifier,
+          item.aggregateId,
+          item.bullmqJobId,
+          item.connectionName,
+          runIssue(item),
+        ].some((value) => value?.toLocaleLowerCase("zh-CN").includes(keyword));
+      return matchesState && matchesRole && matchesTrigger && matchesSearch;
+    });
+  }, [
+    baseDisplayedRuns,
+    roleFilter,
+    runSearch,
+    stateFilter,
+    triggerFilter,
+  ]);
   const catalogPagination = useClientPagination(platform?.catalog || [], 10);
   const jobPagination = useClientPagination(jobs, 10);
-  const runPagination = useClientPagination(displayedRuns, 10, runView);
+  const runPagination = useClientPagination(
+    displayedRuns,
+    10,
+    `${runView}:${runSearch}:${stateFilter}:${roleFilter}:${triggerFilter}`,
+  );
   const activeCount =
     platform?.queue.running ??
-    runs.filter((item) => ["running", "retrying"].includes(item.state)).length;
+    activeRuns.length;
   const attentionCount = attentionRuns.length;
+  const hourMetrics = platform?.observability.lastHour;
+  const detailCollectionJob = runDetail?.collectionJobId
+    ? jobs.find((job) => job.id === runDetail.collectionJobId) || null
+    : null;
+  const detailScheduledTask = runDetail
+    ? platform?.catalog.find(
+        (task) =>
+          task.schedulable &&
+          catalogRunIdentifier(task) === runDetail.taskIdentifier,
+      ) || null
+    : null;
+  const canRerunDetail =
+    Boolean(runDetail) &&
+    !["running", "retrying"].includes(runDetail?.state || "") &&
+    Boolean(detailCollectionJob || detailScheduledTask);
+
+  const changeRunView = (view: TaskCenterView) => {
+    setRunView(view);
+    setStateFilter("all");
+  };
+
+  const resetRunFilters = () => {
+    setRunSearch("");
+    setStateFilter("all");
+    setRoleFilter("all");
+    setTriggerFilter("all");
+  };
+
+  const copyRunDiagnosis = async () => {
+    if (!runDetail) return;
+    const text = [
+      `任务：${runDetail.taskLabel}`,
+      `状态：${runPresentation(runDetail).label}`,
+      `业务运行 ID：${runDetail.aggregateId || "—"}`,
+      `BullMQ Job ID：${runDetail.bullmqJobId}`,
+      `位置：${issueLocation(runDetail)}`,
+      `问题：${runIssue(runDetail) || "无"}`,
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      setToast({ tone: "success", text: "诊断信息已复制" });
+    } catch {
+      setToast({ tone: "warning", text: "复制失败，请手动选择诊断信息" });
+    }
+  };
+
+  const rerunCurrentDetail = async () => {
+    if (!runDetail || !canRerunDetail) return;
+    if (
+      !window.confirm(
+        `确认重新执行“${runDetail.taskLabel}”？请先确认当前异常已处理，重复执行可能再次调用外部接口。`,
+      )
+    )
+      return;
+    if (detailCollectionJob) await runCollectionJob(detailCollectionJob);
+    else if (detailScheduledTask)
+      await runScheduledTask(detailScheduledTask);
+    setRunDetail(null);
+  };
 
   return (
     <>
       <PageHeader
         eyebrow="TASK OPERATIONS CENTER"
         title="任务中心"
-        description="统一查看云端任务目录、执行状态和问题记录；调度周期与启停配置请前往定时任务。"
+        description="优先处理失败、重试和运行异常；调度周期与启停配置请前往定时任务。"
         actions={
           <Button variant="secondary" onClick={() => void load()}>
             <RefreshCw size={17} />
@@ -315,37 +460,148 @@ export function TaskCenterPage() {
         }
       />
 
-      <section className="scheduler-summary">
-        <div>
-          <ListTodo size={20} />
+      <section className="task-center-summary" aria-label="任务运行概览">
+        <button
+          type="button"
+          className={runView === "attention" ? "is-active is-danger" : ""}
+          onClick={() => changeRunView("attention")}
+          aria-pressed={runView === "attention"}
+        >
+          <AlertTriangle size={20} />
           <span>
-            <strong>{(platform?.catalog.length ?? 0) + jobs.length}</strong>
-            <small>任务总数</small>
+            <strong>{attentionCount}</strong>
+            <small>最近需关注</small>
+            <em>失败或部分成功记录</em>
           </span>
-        </div>
-        <div>
+        </button>
+        <button
+          type="button"
+          className={runView === "active" ? "is-active" : ""}
+          onClick={() => changeRunView("active")}
+          aria-pressed={runView === "active"}
+        >
           <Activity size={20} />
           <span>
             <strong>{activeCount}</strong>
             <small>正在执行</small>
+            <em>包含自动重试</em>
           </span>
-        </div>
+        </button>
         <div>
           <Clock3 size={20} />
           <span>
             <strong>{platform?.queue.pending ?? 0}</strong>
             <small>队列等待</small>
+            <em>{waitingDuration(platform?.queue.oldestWaitingMs)}</em>
           </span>
         </div>
-        <div>
-          <AlertTriangle size={20} />
+        <button
+          type="button"
+          className={runView === "all" ? "is-active is-success" : "is-success"}
+          onClick={() => changeRunView("all")}
+          aria-pressed={runView === "all"}
+        >
+          <CheckCircle2 size={20} />
           <span>
-            <strong>{attentionCount}</strong>
-            <small>问题记录</small>
+            <strong>
+              {hourMetrics?.successRate === null ||
+              hourMetrics?.successRate === undefined
+                ? "—"
+                : `${hourMetrics.successRate}%`}
+            </strong>
+            <small>近 1 小时成功率</small>
+            <em>{hourMetrics?.jobs ?? 0} 次运行 · P95 {duration(hourMetrics?.p95DurationMs)}</em>
           </span>
-        </div>
+        </button>
       </section>
 
+      <nav
+        className="task-center-primary-tabs"
+        role="tablist"
+        aria-label="任务中心视图"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={runView === "attention"}
+          aria-controls="task-center-run-workspace"
+          className={runView === "attention" ? "is-active" : ""}
+          onClick={() => changeRunView("attention")}
+        >
+          需关注
+          {attentionCount > 0 && <span>{attentionCount}</span>}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={runView === "active"}
+          aria-controls="task-center-run-workspace"
+          className={runView === "active" ? "is-active" : ""}
+          onClick={() => changeRunView("active")}
+        >
+          运行中
+          {activeCount > 0 && <span>{activeCount}</span>}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={runView === "all"}
+          aria-controls="task-center-run-workspace"
+          className={runView === "all" ? "is-active" : ""}
+          onClick={() => changeRunView("all")}
+        >
+          全部运行
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={runView === "definitions"}
+          aria-controls="task-center-definition-workspace"
+          className={runView === "definitions" ? "is-active" : ""}
+          onClick={() => changeRunView("definitions")}
+        >
+          任务定义
+          <span>{(platform?.catalog.length ?? 0) + jobs.length}</span>
+        </button>
+      </nav>
+
+      {runView === "definitions" && (
+        <section
+          id="task-center-definition-workspace"
+          className="task-definition-switcher"
+          role="tabpanel"
+          aria-label="任务定义"
+        >
+          <div>
+            <strong>任务定义</strong>
+            <span>在这里查看可执行任务；周期、启停和下次运行时间仍在定时任务配置。</span>
+          </div>
+          <div className="run-view-actions" role="tablist" aria-label="任务定义类型">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={definitionView === "platform"}
+              className={definitionView === "platform" ? "run-view-active" : ""}
+              onClick={() => setDefinitionView("platform")}
+            >
+              平台任务 {platform?.catalog.length ?? 0}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={definitionView === "collection"}
+              className={
+                definitionView === "collection" ? "run-view-active" : ""
+              }
+              onClick={() => setDefinitionView("collection")}
+            >
+              采集任务 {jobs.length}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {runView === "definitions" && definitionView === "platform" && (
       <Panel
         title="平台任务目录"
         action={
@@ -413,9 +669,10 @@ export function TaskCenterPage() {
                         className="text-action"
                         disabled={running === task.identifier}
                         onClick={() => void runScheduledTask(task)}
+                        aria-label={`立即运行${task.label}`}
                       >
                         <Play size={13} />
-                        {running === task.identifier ? "提交中" : "执行"}
+                        {running === task.identifier ? "提交中" : "立即运行"}
                       </button>
                     ) : (
                       <span className="task-trigger-note">
@@ -444,7 +701,9 @@ export function TaskCenterPage() {
           onPageSizeChange={catalogPagination.setPageSize}
         />
       </Panel>
+      )}
 
+      {runView === "definitions" && definitionView === "collection" && (
       <Panel
         title="第三方数据采集任务"
         action={<Tag>{jobs.length} 个任务</Tag>}
@@ -511,6 +770,7 @@ export function TaskCenterPage() {
                       className="text-action"
                       disabled={submitting || Boolean(active) || Boolean(queued)}
                       onClick={() => void runCollectionJob(job)}
+                      aria-label={`立即运行${job.name}`}
                     >
                       <Play size={13} />
                       {submitting
@@ -519,7 +779,7 @@ export function TaskCenterPage() {
                           ? runPresentation(active).label
                           : queued
                             ? "排队中"
-                            : "执行"}
+                            : "立即运行"}
                     </button>
                   </div>
                 </div>
@@ -543,39 +803,83 @@ export function TaskCenterPage() {
           onPageSizeChange={jobPagination.setPageSize}
         />
       </Panel>
+      )}
 
+      {runView !== "definitions" && (
       <Panel
-        title="任务运行与问题记录"
+        id="task-center-run-workspace"
+        role="tabpanel"
+        title={`${viewLabels[runView]}任务`}
         action={
-          <div className="run-view-actions">
-            <button
-              className={runView === "recent" ? "run-view-active" : ""}
-              onClick={() => setRunView("recent")}
-            >
-              最近运行
-            </button>
-            <button
-              className={runView === "attention" ? "run-view-active" : ""}
-              onClick={() => setRunView("attention")}
-            >
-              问题记录 {attentionRuns.length ? `(${attentionRuns.length})` : ""}
-            </button>
-            {platform && (
-              <span className="run-metrics">
-                近 1 小时成功率{" "}
-                {platform.observability.lastHour.successRate === null
-                  ? "—"
-                  : `${platform.observability.lastHour.successRate}%`}{" "}
-                · P95 {duration(platform.observability.lastHour.p95DurationMs)}
-              </span>
-            )}
-          </div>
+          <span className="run-metrics">
+            当前展示 {displayedRuns.length} / {baseDisplayedRuns.length} 条
+          </span>
         }
       >
+        <div className="task-center-toolbar">
+          <label className="task-center-search">
+            <Search size={15} />
+            <span className="sr-only">搜索任务或运行 ID</span>
+            <input
+              type="search"
+              value={runSearch}
+              onChange={(event) => setRunSearch(event.target.value)}
+              placeholder="搜索任务、运行 ID 或异常信息"
+            />
+          </label>
+          <select
+            value={stateFilter}
+            onChange={(event) =>
+              setStateFilter(event.target.value as RunStateFilter)
+            }
+            aria-label="筛选运行状态"
+          >
+            <option value="all">全部状态</option>
+            <option value="failed">最终失败</option>
+            <option value="partial">部分成功</option>
+            <option value="running">运行中</option>
+            <option value="retrying">重试中</option>
+            <option value="succeeded">成功</option>
+          </select>
+          <select
+            value={roleFilter}
+            onChange={(event) => setRoleFilter(event.target.value)}
+            aria-label="筛选任务队列"
+          >
+            <option value="all">全部队列</option>
+            <option value="scheduler">调度</option>
+            <option value="snapshot">快照</option>
+            <option value="io">外部 I/O</option>
+            <option value="maintenance">维护</option>
+          </select>
+          <select
+            value={triggerFilter}
+            onChange={(event) => setTriggerFilter(event.target.value)}
+            aria-label="筛选触发方式"
+          >
+            <option value="all">全部触发</option>
+            <option value="manual">手动</option>
+            <option value="schedule">定时</option>
+            <option value="recovery">恢复</option>
+            <option value="queue">队列</option>
+          </select>
+          <Button
+            variant="ghost"
+            onClick={resetRunFilters}
+            disabled={
+              !runSearch &&
+              stateFilter === "all" &&
+              roleFilter === "all" &&
+              triggerFilter === "all"
+            }
+          >
+            <RotateCcw size={14} />
+            重置
+          </Button>
+        </div>
         {displayedRuns.length ? (
           <div className="admin-table background-run-table">
             <div className="admin-table-head">
-              <SequenceHeader />
               <span>任务</span>
               <span>状态</span>
               <span>触发</span>
@@ -585,18 +889,11 @@ export function TaskCenterPage() {
               <span>问题 / 告警</span>
               <span>操作</span>
             </div>
-            {runPagination.items.map((item, index) => {
+            {runPagination.items.map((item) => {
               const issue = runIssue(item);
               const presentation = runPresentation(item);
               return (
                 <div className="admin-table-row" key={item.bullmqJobId}>
-                  <SequenceCell
-                    value={
-                      (runPagination.page - 1) * runPagination.pageSize +
-                      index +
-                      1
-                    }
-                  />
                   <div className="schedule-card-title">
                     <strong>{item.taskLabel}</strong>
                     <small>{item.aggregateId || item.bullmqJobId}</small>
@@ -639,9 +936,10 @@ export function TaskCenterPage() {
                       className="text-action"
                       disabled={loadingRunDetail}
                       onClick={() => void openRunDetail(item)}
+                      aria-label={`查看${item.taskLabel}运行详情`}
                     >
                       <Activity size={13} />
-                      详情
+                      查看
                     </button>
                   </div>
                 </div>
@@ -650,16 +948,37 @@ export function TaskCenterPage() {
           </div>
         ) : (
           <div className="inline-empty">
-            <RefreshCw size={26} />
+            {runSearch ||
+            stateFilter !== "all" ||
+            roleFilter !== "all" ||
+            triggerFilter !== "all" ? (
+              <Search size={26} />
+            ) : (
+              <RefreshCw size={26} />
+            )}
             <strong>
-              {runView === "attention"
-                ? "暂无需关注的运行记录"
-                : "暂无任务运行记录"}
+              {runSearch ||
+              stateFilter !== "all" ||
+              roleFilter !== "all" ||
+              triggerFilter !== "all"
+                ? "没有符合筛选条件的任务"
+                : runView === "attention"
+                  ? "暂无需关注的运行记录"
+                  : runView === "active"
+                    ? "当前没有正在执行的任务"
+                    : "暂无任务运行记录"}
             </strong>
             <span>
-              {runView === "attention"
-                ? "当前没有失败或部分成功告警。"
-                : "手动或定时任务被 Worker 领取后将在这里展示。"}
+              {runSearch ||
+              stateFilter !== "all" ||
+              roleFilter !== "all" ||
+              triggerFilter !== "all"
+                ? "请调整搜索词或重置筛选条件。"
+                : runView === "attention"
+                  ? "当前没有失败或部分成功告警。"
+                  : runView === "active"
+                    ? "新任务被 Worker 领取后会自动出现在这里。"
+                    : "手动或定时任务被 Worker 领取后将在这里展示。"}
             </span>
           </div>
         )}
@@ -673,15 +992,50 @@ export function TaskCenterPage() {
           onPageSizeChange={runPagination.setPageSize}
         />
       </Panel>
+      )}
 
       <Modal
         open={Boolean(runDetail)}
         title={runDetail ? `运行详情 · ${runDetail.taskLabel}` : "运行详情"}
         onClose={() => setRunDetail(null)}
+        className="task-run-drawer"
         footer={
-          <Button variant="ghost" onClick={() => setRunDetail(null)}>
-            关闭
-          </Button>
+          <>
+            <Button variant="ghost" onClick={() => void copyRunDiagnosis()}>
+              <Copy size={15} />
+              复制诊断
+            </Button>
+            {runDetail?.collectionJobId && (
+              <Link
+                className="button button-secondary"
+                to="/admin/customer-operations/interfaces"
+                onClick={() => setRunDetail(null)}
+              >
+                <Settings2 size={15} />
+                接口配置
+              </Link>
+            )}
+            <Link
+              className="button button-secondary"
+              to="/admin/operations/schedules"
+              onClick={() => setRunDetail(null)}
+            >
+              <Clock3 size={15} />
+              定时任务
+            </Link>
+            <Button
+              onClick={() => void rerunCurrentDetail()}
+              disabled={!canRerunDetail || Boolean(running)}
+              title={
+                canRerunDetail
+                  ? "重新提交该任务"
+                  : "该任务只能由业务流程触发"
+              }
+            >
+              <Play size={15} />
+              {running ? "提交中" : "重新执行"}
+            </Button>
+          </>
         }
       >
         {runDetail && (
