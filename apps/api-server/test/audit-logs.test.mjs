@@ -129,12 +129,18 @@ test("云端审计记录成功与失败操作、隔离审计域且不保存敏�
 
   assert.equal(operations.status, 200);
   assert.equal(management.status, 200);
-  assert.ok(operations.body.data.some((item) => item.action === "新增关键词与域名配置" && item.actorAccount === "audit-admin" && item.result === "success"));
-  assert.ok(operations.body.data.some((item) => item.action === "新增关键词与域名配置" && item.actorAccount === "audit-viewer" && item.result === "failed" && item.statusCode === 403));
-  assert.ok(management.body.data.some((item) => item.action === "登录平台" && item.actorAccount === "audit-admin" && item.result === "success"));
+  assert.ok(operations.body.data.some((item) => item.action === "新增关键词与域名配置" && item.actorAccount === "audit-admin" && item.result === "success" && item.tenantId === "TENANT-CHANGAN"));
+  assert.ok(operations.body.data.some((item) => item.action === "新增关键词与域名配置" && item.actorAccount === "audit-viewer" && item.result === "failed" && item.statusCode === 403 && item.tenantId === "TENANT-CHANGAN"));
+  assert.ok(management.body.data.some((item) => item.action === "登录平台" && item.actorAccount === "audit-admin" && item.result === "success" && item.tenantId === null));
   assert.ok(management.body.data.some((item) => item.action === "登录平台" && item.actorAccount === "audit-admin" && item.result === "failed" && item.statusCode === 401));
   assert.ok(!management.body.data.some((item) => item.path === "/api/targets"));
   assert.ok(!operations.body.data.some((item) => item.path === "/api/auth/login"));
+
+  const tenantOnly = await request("/api/audit-logs?context=operations&tenant_id=TENANT-CHANGAN&page_size=100", { token: adminToken });
+  assert.equal(tenantOnly.status, 200);
+  assert.ok(tenantOnly.body.data.length >= 2);
+  assert.ok(tenantOnly.body.data.every((item) => item.tenantId === "TENANT-CHANGAN"));
+  assert.equal((await request("/api/audit-logs?context=operations&tenant_id=TENANT-NOT-FOUND", { token: adminToken })).status, 404);
 
   const failedOnly = await request("/api/audit-logs?context=operations&result=failed&query=audit-viewer", { token: adminToken });
   assert.equal(failedOnly.status, 200);
@@ -144,8 +150,10 @@ test("云端审计记录成功与失败操作、隔离审计域且不保存敏�
   const inspection = new pg.Client({ connectionString: databaseUrl });
   await inspection.connect();
   await inspection.query(`SET search_path TO "${schema}"`);
-  const details = await inspection.query("SELECT detail_json FROM audit_logs");
+  const details = await inspection.query("SELECT tenant_id,detail_json FROM audit_logs");
+  const scopedTargetAudits = await inspection.query("SELECT COUNT(*)::int AS count FROM audit_logs WHERE path='/api/targets' AND tenant_id='TENANT-CHANGAN'");
   await inspection.end();
+  assert.equal(scopedTargetAudits.rows[0].count, 2);
   const storedDetails = JSON.stringify(details.rows);
   assert.ok(!storedDetails.includes(adminPassword));
   assert.ok(!storedDetails.includes(portalPassword));

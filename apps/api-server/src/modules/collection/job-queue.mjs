@@ -53,7 +53,9 @@ export function createCollectionJobQueue({ db, outbox, syncConnection }) {
   async function requestRun(jobId, { triggerType = "manual", scheduledFor = null } = {}) {
     try {
       return await db.transaction(async () => {
-        const job = await db.prepare("SELECT * FROM collection_jobs WHERE id=? FOR UPDATE").get(jobId);
+        const job = await db.prepare(`SELECT collection_jobs.*,api_connections.tenant_id
+          FROM collection_jobs JOIN api_connections ON api_connections.id=collection_jobs.connection_id
+          WHERE collection_jobs.id=? FOR UPDATE OF collection_jobs`).get(jobId);
         if (!job) return null;
 
         if (triggerType === "schedule") {
@@ -75,10 +77,11 @@ export function createCollectionJobQueue({ db, outbox, syncConnection }) {
           jobKey: `${COLLECTION_TASK}:${runId}`,
           role: "io",
           taskIdentifier: COLLECTION_TASK,
-          payload: { runId, triggerType },
+          payload: { runId, triggerType, tenantId: job.tenant_id },
           maxAttempts: Number(job.retry_limit) + 1,
           aggregateType: "collection_run",
-          aggregateId: runId
+          aggregateId: runId,
+          tenantId: job.tenant_id
         });
         return { run: parseCollectionRun(await db.prepare("SELECT * FROM collection_runs WHERE id=?").get(runId)), deduplicated: false };
       });

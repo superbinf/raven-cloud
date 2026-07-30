@@ -76,11 +76,13 @@ test("统一情报、真实看板和案件接口只聚合数据库记录", async
   await database.query(`SET search_path TO "${schema}", public`);
   const credentialSubscription = await database.query("SELECT id FROM credential_subscriptions ORDER BY id LIMIT 1");
   assert.equal(credentialSubscription.rowCount, 1);
+  const credentialSubscriptionId = Number(credentialSubscription.rows[0].id);
+  assert.ok(Number.isSafeInteger(credentialSubscriptionId));
   await database.query(`INSERT INTO credential_records
-    (id,sub_id,url,system_name,account,password,leaked_at,source,raw_json,first_seen_at)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, [
-    "CRED-AGGREGATION-TEST", credentialSubscription.rows[0].id, "https://today.example.test/login", "今日测试系统",
-    "today@example.test", "Today-Test#2026", now, "aggregation-test", "{}", now
+    (id,sub_id,url,system_name,account,password,leaked_at,source,raw_json,first_seen_at,tenant_id)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [
+    "CRED-AGGREGATION-TEST", credentialSubscriptionId, "https://today.example.test/login", "今日测试系统",
+    "today@example.test", "Today-Test#2026", now, "aggregation-test", "{}", now, "TENANT-CHANGAN"
   ]);
   await database.query(`INSERT INTO sensitive_records
     (id,category,target_id,title,risk,fields_json,record_hash,first_seen_at,last_seen_at,import_status,import_count,batch_id,status,tenant_id)
@@ -144,8 +146,8 @@ test("统一情报、真实看板和案件接口只聚合数据库记录", async
   assert.equal(credentials.body.total, 0);
   const subscriptions = await request(`/api/credentials/subscriptions?since=${encodeURIComponent(since)}`, { token: portal });
   assert.equal(subscriptions.status, 200);
-  assert.equal(subscriptions.body.find((item) => item.id === credentialSubscription.rows[0].id).todayNewCount, 1);
-  const todayCredentials = await request(`/api/credentials/results?sub_id=${credentialSubscription.rows[0].id}&page=1&page_size=10&since=${encodeURIComponent(since)}&today_only=1`, { token: portal });
+  assert.equal(subscriptions.body.find((item) => item.id === credentialSubscriptionId).todayNewCount, 1);
+  const todayCredentials = await request(`/api/credentials/results?sub_id=${credentialSubscriptionId}&page=1&page_size=10&since=${encodeURIComponent(since)}&today_only=1`, { token: portal });
   assert.equal(todayCredentials.body.total, 1);
   assert.equal(todayCredentials.body.allTotal >= 1, true);
   assert.equal(todayCredentials.body.todayNewCount, 1);

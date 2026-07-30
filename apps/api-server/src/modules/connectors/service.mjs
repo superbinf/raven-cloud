@@ -159,12 +159,32 @@ export function createConnectorService({ db, decrypt, fetchImpl = defaultConnect
     if (!Array.isArray(list.data)) throw httpError(502, "订阅列表返回格式不正确");
     await db.prepare("DELETE FROM credential_records WHERE source='local-api-debug' AND sub_id IN (SELECT id FROM credential_subscriptions WHERE target_id=?)").run(row.target_id);
     await db.prepare("DELETE FROM credential_subscriptions WHERE target_id=? AND user_permission_id='changan-debug-permission'").run(row.target_id);
-    const upsertSub = db.prepare(`INSERT INTO credential_subscriptions (id,target_id,sub_type,sub_category,user_permission_id,value,expire_time,count,tenant_id) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET target_id=excluded.target_id,sub_type=excluded.sub_type,sub_category=excluded.sub_category,user_permission_id=excluded.user_permission_id,value=excluded.value,expire_time=excluded.expire_time,count=excluded.count,tenant_id=excluded.tenant_id`);
-    const upsertRecord = db.prepare(`INSERT INTO credential_records (id,sub_id,url,system_name,account,password,leaked_at,source,raw_json,first_seen_at,is_published,reviewed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET url=excluded.url,system_name=excluded.system_name,account=excluded.account,password=excluded.password,leaked_at=excluded.leaked_at,source=excluded.source,raw_json=excluded.raw_json,is_published=excluded.is_published,reviewed_at=excluded.reviewed_at`);
     const firstSeenAt = new Date().toISOString();
     let recordCount = 0;
     for (const sub of list.data.filter((item) => item.sub_type === "credential-leak")) {
-      await upsertSub.run(sub.id, row.target_id, sub.sub_type, sub.sub_category, sub.user_permission_id || "", sub.value, sub.expire_time, sub.count || 0, row.tenant_id);
+      const upstreamSubscriptionId = stringifyField(sub.id).trim();
+      if (!upstreamSubscriptionId) throw httpError(502, "凭据订阅缺少上游 ID", { errorType: "upstream_format", errorCode: "CREDENTIAL_SUBSCRIPTION_ID_MISSING" });
+      let storedSubscription = await db.prepare(`SELECT id FROM credential_subscriptions
+        WHERE tenant_id=? AND source_connection_id=? AND upstream_id=?`).get(row.tenant_id, row.id, upstreamSubscriptionId);
+      if (!storedSubscription) {
+        const legacyId = Number(upstreamSubscriptionId);
+        if (Number.isSafeInteger(legacyId) && legacyId > 0) {
+          storedSubscription = await db.prepare(`SELECT id FROM credential_subscriptions
+            WHERE id=? AND tenant_id=? AND source_connection_id IS NULL AND upstream_id IS NULL`).get(legacyId, row.tenant_id);
+        }
+      }
+      if (storedSubscription) {
+        await db.prepare(`UPDATE credential_subscriptions SET
+          target_id=?,sub_type=?,sub_category=?,user_permission_id=?,value=?,expire_time=?,count=?,source_connection_id=?,upstream_id=?
+          WHERE id=? AND tenant_id=?`)
+          .run(row.target_id, sub.sub_type, sub.sub_category, sub.user_permission_id || "", sub.value, sub.expire_time, sub.count || 0, row.id, upstreamSubscriptionId, storedSubscription.id, row.tenant_id);
+      } else {
+        storedSubscription = await db.prepare(`INSERT INTO credential_subscriptions
+          (target_id,sub_type,sub_category,user_permission_id,value,expire_time,count,tenant_id,source_connection_id,upstream_id)
+          VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING id`)
+          .get(row.target_id, sub.sub_type, sub.sub_category, sub.user_permission_id || "", sub.value, sub.expire_time, sub.count || 0, row.tenant_id, row.id, upstreamSubscriptionId);
+      }
+      const subscriptionId = Number(storedSubscription.id);
       const expectedCount = Math.max(0, Math.floor(Number(sub.count) || 0));
       const expectedPages = expectedCount ? Math.ceil(expectedCount / pageSize) : maxPages;
       if (expectedPages > maxPages) throw httpError(502, `订阅 ${sub.value} 共 ${expectedCount} 条，超过当前采集上限 ${maxPages * pageSize} 条`, { errorType: "upstream_format", errorCode: "CREDENTIAL_PAGE_LIMIT" });
@@ -175,6 +195,8 @@ export function createConnectorService({ db, decrypt, fetchImpl = defaultConnect
         if (!Array.isArray(result.data)) throw httpError(502, `订阅 ${sub.value} 第 ${page} 页返回格式不正确`);
         for (const item of result.data) {
           const source = item._source || {};
+          const upstreamRecordId = stringifyField(item._id).trim();
+          if (!upstreamRecordId) throw httpError(502, "凭据记录缺少上游 ID", { errorType: "upstream_format", errorCode: "CREDENTIAL_RECORD_ID_MISSING" });
           const msg = source.msg && typeof source.msg === "object" ? source.msg : {};
           let original = {};
           if (typeof source.original_other === "string") {
@@ -183,7 +205,30 @@ export function createConnectorService({ db, decrypt, fetchImpl = defaultConnect
           const displayUrl = (Array.isArray(original) ? original[0] : original.url || original.domain || original.root_domain) || msg.url || msg.domain || msg.root_domain || source.domain || source.root_domain || "";
           let systemName = source.name && source.name !== "-" ? source.name.trim() : "未知系统";
           try { if (systemName === "未知系统" && displayUrl) systemName = new URL(displayUrl.includes("://") ? displayUrl : `https://${displayUrl}`).hostname; } catch {}
-          await upsertRecord.run(String(item._id), sub.id, stringifyField(displayUrl), stringifyField(systemName), stringifyField(source.account || source.email || ""), stringifyField(source.msg?.pwd || source.password || ""), stringifyField(source.timestamp || source.find_time || ""), stringifyField(source.source || "darkweb-api"), JSON.stringify({ ...source, original_other: original }), firstSeenAt, autoPublish, autoPublish ? firstSeenAt : null);
+          let storedRecord = await db.prepare(`SELECT id FROM credential_records
+            WHERE tenant_id=? AND source_connection_id=? AND upstream_id=?`).get(row.tenant_id, row.id, upstreamRecordId);
+          if (!storedRecord) {
+            storedRecord = await db.prepare(`SELECT id FROM credential_records
+              WHERE id=? AND tenant_id=? AND source_connection_id IS NULL AND upstream_id IS NULL`).get(upstreamRecordId, row.tenant_id);
+          }
+          const recordValues = [
+            subscriptionId, stringifyField(displayUrl), stringifyField(systemName), stringifyField(source.account || source.email || ""),
+            stringifyField(source.msg?.pwd || source.password || ""), stringifyField(source.timestamp || source.find_time || ""),
+            stringifyField(source.source || "darkweb-api"), JSON.stringify({ ...source, original_other: original }),
+            autoPublish, autoPublish ? firstSeenAt : null, row.tenant_id, row.id, upstreamRecordId
+          ];
+          if (storedRecord) {
+            await db.prepare(`UPDATE credential_records SET
+              sub_id=?,url=?,system_name=?,account=?,password=?,leaked_at=?,source=?,raw_json=?,is_published=?,reviewed_at=?,
+              tenant_id=?,source_connection_id=?,upstream_id=?
+              WHERE id=?`).run(...recordValues, storedRecord.id);
+          } else {
+            const internalRecordId = `CRED-${createHash("sha256").update(`${row.tenant_id}|${row.id}|${upstreamRecordId}`).digest("hex").slice(0, 24).toUpperCase()}`;
+            await db.prepare(`INSERT INTO credential_records
+              (id,sub_id,url,system_name,account,password,leaked_at,source,raw_json,first_seen_at,is_published,reviewed_at,tenant_id,source_connection_id,upstream_id)
+              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+              .run(internalRecordId, ...recordValues.slice(0, 8), firstSeenAt, ...recordValues.slice(8));
+          }
         }
         subscriptionRecordCount += result.data.length;
         recordCount += result.data.length;

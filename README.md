@@ -153,6 +153,14 @@ curl --fail --cacert /absolute/path/to/ca.crt https://ti.example.com:8787/health
 
 正常响应为 `{"ok":true,"service":"sentinel-api-server"}`。还应在管理后台检查四类 Worker 心跳、待处理 Outbox、队列积压和最近任务运行记录。
 
+### Worker 节点与跨主机扩容
+
+管理后台的“运行保障 -> Worker 节点”支持节点预注册、在线状态、角色与并发查看，以及启用、排空、禁用和离线记录清理。排空和禁用只停止该节点领取新任务，已经开始的任务会继续完成；Worker 进程保留心跳，因此可以从管理后台重新启用。
+
+跨主机 Worker 必须连接同一 PostgreSQL 和 Redis，并在每台 Worker 主机设置唯一的 `SENTINEL_WORKER_NODE_ID`；同一主机上的不同角色可以使用相同 ID，从而在控制面聚合成一个逻辑节点。可选的 `SENTINEL_WORKER_NODE_NAME` 用于展示。
+
+`scheduler` 和纯网络采集类 `io` Worker 可以直接跨主机部署。`snapshot`、文件解析和 `maintenance` 还必须能够访问与 Cloud API 一致的 `SENTINEL_DATA_DIR`；多主机环境应挂载同一受控共享存储。只配置独立本地目录会导致附件、报告或快照文件在不同节点间不可见，不能视为完整的跨主机部署。
+
 ## 数据与备份
 
 Compose 使用以下命名卷，`stop` 不会删除它们：

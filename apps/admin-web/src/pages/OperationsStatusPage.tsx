@@ -5,6 +5,7 @@ import { Button, Panel, StatusDot, Tag } from "@sentinel/ui";
 import { PageHeader, Toast, type ToastState } from "../components/AdminPrimitives";
 import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
 import { useAdminInitialLoading } from "../app/AdminInitialLoading";
+import { useCustomerScope } from "../app/CustomerScopeLayout";
 
 type BackgroundOverview = {
   queue: { pending: number; running: number; permanentlyFailed: number; oldestWaitingMs: number };
@@ -17,6 +18,7 @@ function duration(value: number) {
 }
 
 export function OperationsStatusPage() {
+  const { tenantId } = useCustomerScope();
   const [overview, setOverview] = useState<BackgroundOverview | null>(null);
   const [connections, setConnections] = useState<ApiConnection[]>([]);
   const [runs, setRuns] = useState<BackgroundRun[]>([]);
@@ -26,12 +28,12 @@ export function OperationsStatusPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [background, connectionRows, runRows] = await Promise.all([apiFetch<BackgroundOverview>("/api/background-tasks"), apiFetch<ApiConnection[]>("/api/connections"), apiFetch<{ items: BackgroundRun[] }>("/api/background-runs?limit=12")]);
+      const [background, connectionRows, runRows] = await Promise.all([apiFetch<BackgroundOverview>("/api/background-tasks"), apiFetch<ApiConnection[]>("/api/connections"), apiFetch<{ items: BackgroundRun[] }>(`/api/background-runs?tenant_id=${encodeURIComponent(tenantId)}&limit=12`)]);
       setOverview(background); setConnections(connectionRows); setRuns(runRows.items);
     } catch (error) { setToast({ tone: "warning", text: error instanceof Error ? error.message : "运行状态加载失败" }); }
     finally { setLoading(false); }
   };
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [tenantId]);
   const abnormalConnections = connections.filter((item) => item.enabled && item.status !== "正常");
   return <>
     <PageHeader eyebrow="OPERATIONS OBSERVABILITY" title="运行状态" description="集中查看任务队列、数据接口与最近运行状态。" actions={<Button variant="secondary" onClick={() => void load()} disabled={loading}><RefreshCw size={16} />{loading ? "刷新中..." : "刷新状态"}</Button>} />

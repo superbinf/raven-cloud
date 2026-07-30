@@ -33,6 +33,7 @@ import {
   useClientPagination,
 } from "../components/TablePagination";
 import { useAdminInitialLoading } from "../app/AdminInitialLoading";
+import { useCustomerScope } from "../app/CustomerScopeLayout";
 import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
 
 type BackgroundTask = {
@@ -164,6 +165,7 @@ const viewLabels: Record<Exclude<TaskCenterView, "definitions">, string> = {
 };
 
 export function TaskCenterPage() {
+  const { tenantId } = useCustomerScope();
   const [platform, setPlatform] = useState<BackgroundTaskOverview | null>(null);
   const [jobs, setJobs] = useState<CollectionJob[]>([]);
   const [runs, setRuns] = useState<BackgroundRun[]>([]);
@@ -206,9 +208,11 @@ export function TaskCenterPage() {
     Promise.all([
       apiFetch<BackgroundTaskOverview>("/api/background-tasks"),
       apiFetch<CollectionJob[]>("/api/collection-jobs"),
-      apiFetch<{ items: BackgroundRun[] }>("/api/background-runs?limit=30"),
       apiFetch<{ items: BackgroundRun[] }>(
-        "/api/background-runs?attention=true&limit=30",
+        `/api/background-runs?tenant_id=${encodeURIComponent(tenantId)}&limit=30`,
+      ),
+      apiFetch<{ items: BackgroundRun[] }>(
+        `/api/background-runs?tenant_id=${encodeURIComponent(tenantId)}&attention=true&limit=30`,
       ),
     ]).then(([overview, jobItems, runItems, attentionItems]) => {
       setPlatform(overview);
@@ -225,7 +229,7 @@ export function TaskCenterPage() {
         }),
       )
       .finally(() => setInitialLoading(false));
-  }, []);
+  }, [tenantId]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -233,7 +237,7 @@ export function TaskCenterPage() {
       load().catch(() => undefined);
     }, 2_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [tenantId]);
 
   useEffect(() => {
     if (!runDetail || !["running", "retrying"].includes(runDetail.state))

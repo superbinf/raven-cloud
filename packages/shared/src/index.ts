@@ -205,6 +205,7 @@ export interface BackgroundRun {
   maxAttempts: number;
   aggregateType?: string | null;
   aggregateId?: string | null;
+  tenantId?: string | null;
   collectionJobId?: string | null;
   connectionName?: string | null;
   businessStatus?: string | null;
@@ -223,6 +224,37 @@ export interface BackgroundRun {
 
 export interface BackgroundRunDetail extends BackgroundRun {
   attempts: BackgroundRun[];
+}
+
+export type WorkerNodeDesiredState = "active" | "draining" | "disabled";
+export type WorkerNodeRuntimeState = WorkerNodeDesiredState | "drained" | "offline";
+
+export interface WorkerInstance {
+  instanceId: string;
+  role: "scheduler" | "snapshot" | "io" | "maintenance";
+  processId: number;
+  hostName: string;
+  concurrency: number;
+  appliedState: WorkerNodeDesiredState;
+  activeJobs: number;
+  startedAt: string;
+  lastHeartbeatAt: string;
+  healthy: boolean;
+}
+
+export interface WorkerNode {
+  nodeId: string;
+  displayName: string;
+  description: string;
+  desiredState: WorkerNodeDesiredState;
+  runtimeState: WorkerNodeRuntimeState;
+  registeredAt: string;
+  lastSeenAt?: string | null;
+  updatedAt: string;
+  healthy: boolean;
+  activeJobs: number;
+  roles: WorkerInstance["role"][];
+  instances: WorkerInstance[];
 }
 
 export interface MonitoringTarget {

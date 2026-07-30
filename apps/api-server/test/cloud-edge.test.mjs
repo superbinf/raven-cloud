@@ -56,6 +56,7 @@ test("快照调度仅为达到部署配置周期的实例创建任务", async ()
       assert.ok(Number.isFinite(Date.parse(now)));
       return ["EDGE-DUE"];
     },
+    async getDeployment(id) { return { id, tenantId: "TENANT-CHANGAN" }; },
     async activeSnapshotJob() { return null; },
     async createSnapshotJob(row) { created.push(row); },
     async getSnapshotJob(id) { return { id, deploymentId: "EDGE-DUE", status: "queued" }; }
@@ -72,6 +73,8 @@ test("快照调度仅为达到部署配置周期的实例创建任务", async ()
   assert.equal(created[0].deploymentId, "EDGE-DUE");
   assert.equal(created[0].triggerType, "schedule");
   assert.equal(outboxJobs.length, 1);
+  assert.equal(outboxJobs[0].tenantId, "TENANT-CHANGAN");
+  assert.equal(outboxJobs[0].payload.tenantId, "TENANT-CHANGAN");
 });
 
 test("云端部署凭证、租户隔离和可配置 API 快照形成闭环", async (t) => {
@@ -162,8 +165,8 @@ test("云端部署凭证、租户隔离和可配置 API 快照形成闭环", asy
     (id,target_id,sub_type,sub_category,value,expire_time,count,tenant_id)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, [987654321, "OBJ-CHANGAN", "credential-leak", "credential", "timestamp.example", "1772429605000", 1, "TENANT-CHANGAN"]);
   await database.query(`INSERT INTO credential_records
-    (id,sub_id,url,system_name,account,password,leaked_at,source,raw_json)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`, ["CRED-EPOCH-TIMESTAMP", 987654321, "https://timestamp.example", "时间戳测试", "tester", "masked", "1772429605", "test", "{}"]);
+    (id,sub_id,url,system_name,account,password,leaked_at,source,raw_json,tenant_id)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, ["CRED-EPOCH-TIMESTAMP", 987654321, "https://timestamp.example", "时间戳测试", "tester", "masked", "1772429605", "test", "{}", "TENANT-CHANGAN"]);
   const reportPath = join(dataDir, "reports", "REPORT-EDGE-FILE.html");
   const reportDataPath = join(dataDir, "reports", "REPORT-EDGE-FILE.json");
   const reportContent = Buffer.from(`<html><body>${"complete edge report ".repeat(320)}</body></html>`);

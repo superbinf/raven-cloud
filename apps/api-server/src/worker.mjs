@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { hostname } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Worker } from "bullmq";
@@ -29,6 +30,12 @@ const roleArg = process.argv.find((value) => value.startsWith("--role="));
 const role = roleArg?.slice("--role=".length) || process.env.SENTINEL_WORKER_ROLE || "all";
 const allowedRoles = new Set(["all", "scheduler", "snapshot", "io", "maintenance"]);
 if (!allowedRoles.has(role)) throw new Error(`未知后台角色：${role}`);
+const workerHostName = hostname();
+const workerNodeId = String(process.env.SENTINEL_WORKER_NODE_ID || workerHostName).trim();
+if (!workerNodeId || workerNodeId.length > 100 || !/^[A-Za-z0-9][A-Za-z0-9._:-]*$/u.test(workerNodeId)) {
+  throw new Error("SENTINEL_WORKER_NODE_ID 只能包含字母、数字、点、下划线、冒号和连字符，且不能超过 100 个字符");
+}
+const workerNodeName = String(process.env.SENTINEL_WORKER_NODE_NAME || workerHostName).trim().slice(0, 120) || workerNodeId;
 
 const { encrypt, decrypt } = createSecretCodec(masterSecret);
 await migrate();
@@ -91,9 +98,11 @@ const concurrency = {
 };
 const selectedRoles = role === "all" ? Object.keys(taskLists) : [role];
 const workers = [];
-const heartbeatStops = [];
 let stopOutbox = null;
 let scheduleReconcileTimer = null;
+let controlTimer = null;
+let appliedNodeState = null;
+let controlUpdate = Promise.resolve();
 
 function aggregateContext(job) {
   if (job.data?.runId) return { type: "collection_run", id: String(job.data.runId) };
@@ -130,10 +139,10 @@ async function recordRunStart(queueRole, workerInstanceId, job, maxAttempts) {
   const queueLatencyMs = queuedAt ? Math.max(0, Date.now() - new Date(queuedAt).getTime()) : null;
   const result = await db.prepare(`INSERT INTO background_task_runs
     (bullmq_job_id,queue_role,task_identifier,trigger_type,status,attempt,started_at,
-     aggregate_type,aggregate_id,worker_instance_id,max_attempts,queued_at,queue_latency_ms)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id`).get(
+     aggregate_type,aggregate_id,tenant_id,worker_instance_id,max_attempts,queued_at,queue_latency_ms)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id`).get(
     String(job.id), queueRole, job.name, String(job.data?.triggerType || "queued"), "running", Number(job.attemptsMade || 0) + 1, now,
-    aggregate.type, aggregate.id, workerInstanceId, maxAttempts, queuedAt, queueLatencyMs
+    aggregate.type, aggregate.id, job.data?.tenantId ? String(job.data.tenantId) : null, workerInstanceId, maxAttempts, queuedAt, queueLatencyMs
   );
   return result.id;
 }
@@ -151,29 +160,91 @@ async function recordRunFinish(id, status, { error = null, noticeMessage = null,
     );
 }
 
-function startHeartbeat(queueRole, instanceId) {
-  const startedAt = new Date().toISOString();
-  const write = () => db.prepare(`INSERT INTO worker_instances
-    (instance_id,role,process_id,started_at,last_heartbeat_at,status) VALUES (?,?,?,?,?,'running')
-    ON CONFLICT(instance_id) DO UPDATE SET last_heartbeat_at=excluded.last_heartbeat_at,status='running',stopped_at=NULL`)
-    .run(instanceId, queueRole, process.pid, startedAt, new Date().toISOString());
-  let heartbeat = write().catch((error) => console.error(`Worker 心跳失败（${queueRole}）`, error));
-  const timer = setInterval(() => {
-    heartbeat = write().catch((error) => console.error(`Worker 心跳失败（${queueRole}）`, error));
-  }, 5_000);
-  timer.unref?.();
-  return async () => {
-    clearInterval(timer);
-    await heartbeat;
-    await db.prepare("UPDATE worker_instances SET status='stopped',stopped_at=?,last_heartbeat_at=? WHERE instance_id=?")
-      .run(new Date().toISOString(), new Date().toISOString(), instanceId);
-  };
+async function ensureWorkerNode() {
+  const now = new Date().toISOString();
+  await db.prepare(`INSERT INTO worker_nodes
+    (node_id,display_name,description,desired_state,registered_at,last_seen_at,updated_at)
+    VALUES (?,?,'','active',?,?,?)
+    ON CONFLICT(node_id) DO UPDATE SET last_seen_at=excluded.last_seen_at`)
+    .run(workerNodeId, workerNodeName, now, now, now);
+  return db.prepare("SELECT * FROM worker_nodes WHERE node_id=?").get(workerNodeId);
+}
+
+async function startSchedulerServices() {
+  if (!selectedRoles.includes("scheduler")) return;
+  if (!stopOutbox) {
+    await scheduleService.reconcileAll();
+    stopOutbox = outbox.startDispatcher();
+  }
+  if (!scheduleReconcileTimer) {
+    scheduleReconcileTimer = setInterval(() => void scheduleService.reconcileAll().catch((error) => console.error("BullMQ 定时计划校准失败", error)), 30_000);
+    scheduleReconcileTimer.unref?.();
+  }
+}
+
+async function stopSchedulerServices() {
+  if (scheduleReconcileTimer) {
+    clearInterval(scheduleReconcileTimer);
+    scheduleReconcileTimer = null;
+  }
+  if (stopOutbox) {
+    const stop = stopOutbox;
+    stopOutbox = null;
+    await stop();
+  }
+}
+
+async function applyWorkerNodeState(desiredState) {
+  if (!["active", "draining", "disabled"].includes(desiredState)) throw new Error(`Worker 节点期望状态不合法：${desiredState}`);
+  if (desiredState === "active") {
+    for (const entry of workers) entry.worker.resume();
+    await startSchedulerServices();
+  } else {
+    await stopSchedulerServices();
+    await Promise.all(workers.map((entry) => entry.worker.pause(true)));
+  }
+  appliedNodeState = desiredState;
+}
+
+async function writeWorkerHeartbeat() {
+  const node = await ensureWorkerNode();
+  if (node.desired_state !== appliedNodeState) await applyWorkerNodeState(node.desired_state);
+  const now = new Date().toISOString();
+  await db.transaction(async () => {
+    await db.prepare("UPDATE worker_nodes SET last_seen_at=? WHERE node_id=?").run(now, workerNodeId);
+    for (const entry of workers) {
+      await db.prepare(`INSERT INTO worker_instances
+        (instance_id,node_id,role,process_id,host_name,concurrency,applied_state,active_jobs,started_at,last_heartbeat_at,status)
+        VALUES (?,?,?,?,?,?,?,?,?,?,'running')
+        ON CONFLICT(instance_id) DO UPDATE SET
+          node_id=excluded.node_id,process_id=excluded.process_id,host_name=excluded.host_name,
+          concurrency=excluded.concurrency,applied_state=excluded.applied_state,active_jobs=excluded.active_jobs,
+          last_heartbeat_at=excluded.last_heartbeat_at,status='running',stopped_at=NULL`)
+        .run(entry.instanceId, workerNodeId, entry.role, process.pid, workerHostName, concurrency[entry.role], appliedNodeState, entry.runtime.activeJobs, entry.startedAt, now);
+    }
+  });
+}
+
+function queueControlUpdate() {
+  controlUpdate = controlUpdate
+    .then(writeWorkerHeartbeat)
+    .catch((error) => console.error(`Worker 节点控制同步失败（${workerNodeId}）`, error));
+  return controlUpdate;
+}
+
+function startWorkerNodeControl() {
+  void queueControlUpdate();
+  controlTimer = setInterval(() => void queueControlUpdate(), 5_000);
+  controlTimer.unref?.();
 }
 
 async function startWorker(queueRole) {
   const tasks = taskLists[queueRole];
-  const workerInstanceId = `${queueRole}-${randomUUID()}`;
+  const workerInstanceId = `${workerNodeId}:${queueRole}:${randomUUID()}`;
+  const runtimeState = { activeJobs: 0 };
+  const startedAt = new Date().toISOString();
   const worker = new Worker(QUEUE_NAMES[queueRole], async (job) => {
+    runtimeState.activeJobs += 1;
     const attempt = Number(job.attemptsMade || 0) + 1;
     const maxAttempts = Number(job.opts.attempts || 1);
     const startedAt = Date.now();
@@ -213,37 +284,40 @@ async function startWorker(queueRole) {
         console.error(`BullMQ 任务最终失败（${context}; durationMs=${duration}）`, error);
       }
       throw error;
+    } finally {
+      runtimeState.activeJobs = Math.max(0, runtimeState.activeJobs - 1);
     }
   }, {
     connection: runtime.connection,
     prefix: runtime.prefix,
-    concurrency: concurrency[queueRole]
+    concurrency: concurrency[queueRole],
+    autorun: false
   });
   worker.on("error", (error) => console.error(`BullMQ Worker 错误（${queueRole}）`, error));
   worker.on("stalled", (jobId) => console.error(`BullMQ 任务停滞（${queueRole}/${jobId}）`));
   await worker.waitUntilReady();
-  workers.push({ role: queueRole, worker });
-  heartbeatStops.push(startHeartbeat(queueRole, workerInstanceId));
+  workers.push({ role: queueRole, worker, instanceId: workerInstanceId, runtime: runtimeState, startedAt });
 }
 
-if (selectedRoles.includes("scheduler")) {
-  await scheduleService.reconcileAll();
-  scheduleReconcileTimer = setInterval(() => void scheduleService.reconcileAll().catch((error) => console.error("BullMQ 定时计划校准失败", error)), 30_000);
-  scheduleReconcileTimer.unref?.();
-  stopOutbox = outbox.startDispatcher();
-}
+const initialNode = await ensureWorkerNode();
 for (const selectedRole of selectedRoles) await startWorker(selectedRole);
+await applyWorkerNodeState(initialNode.desired_state);
+await writeWorkerHeartbeat();
+startWorkerNodeControl();
 
-console.log(`Sentinel BullMQ worker started (role=${role}; workers=${selectedRoles.join(",")}; prefix=${runtime.prefix})`);
+console.log(`Sentinel BullMQ worker started (node=${workerNodeId}; state=${appliedNodeState}; role=${role}; workers=${selectedRoles.join(",")}; prefix=${runtime.prefix})`);
 
 let stopping = false;
 async function shutdown(exitCode = 0) {
   if (stopping) return;
   stopping = true;
-  if (scheduleReconcileTimer) clearInterval(scheduleReconcileTimer);
-  if (stopOutbox) await stopOutbox();
+  if (controlTimer) clearInterval(controlTimer);
+  await controlUpdate;
+  await stopSchedulerServices();
   await Promise.allSettled(workers.map(({ worker }) => worker.close()));
-  await Promise.allSettled(heartbeatStops.map((stop) => stop()));
+  const stoppedAt = new Date().toISOString();
+  await Promise.allSettled(workers.map(({ instanceId }) => db.prepare("UPDATE worker_instances SET status='stopped',active_jobs=0,stopped_at=?,last_heartbeat_at=? WHERE instance_id=?")
+    .run(stoppedAt, stoppedAt, instanceId)));
   await snapshotJobs.release();
   await runtime.close();
   await closeDatabase();

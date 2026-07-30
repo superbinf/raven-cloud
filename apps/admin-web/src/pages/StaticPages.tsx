@@ -18,6 +18,7 @@ type AuditRecord = {
   id: string;
   occurredAt: string;
   context: AuditContext;
+  tenantId: string | null;
   actorAccount: string;
   actorName: string;
   actorRole: string;
@@ -136,7 +137,7 @@ export function AuditPage({ context = "operations" }: { context?: AuditContext }
               <time dateTime={record.occurredAt}>{displayTime(record.occurredAt)}</time>
               <div className="audit-actor"><strong>{record.actorName || record.actorAccount || "匿名访问"}</strong><small>{record.actorAccount || "anonymous"}{record.actorRole ? ` · ${record.actorRole}` : ""}</small></div>
               <div className="audit-action"><strong>{record.action}</strong><small><Tag tone="cyan">{record.method}</Tag>{record.path}</small></div>
-              <div className="audit-resource"><strong>{resourceLabels[record.resourceType] || record.resourceType}</strong><small>{record.resourceId || "--"}</small></div>
+              <div className="audit-resource"><strong>{resourceLabels[record.resourceType] || record.resourceType}</strong><small>{record.resourceId || "--"}</small><small>{record.tenantId ? `客户：${record.tenantId}` : "平台级操作"}</small></div>
               <StatusDot label={`${record.result === "success" ? "成功" : "失败"} · ${record.statusCode}`} tone={record.result === "success" ? "success" : "danger"} />
               <div className="audit-request"><code>{record.ipAddress || "--"}</code><small title={record.requestId}>{record.requestId}</small></div>
             </div>)}

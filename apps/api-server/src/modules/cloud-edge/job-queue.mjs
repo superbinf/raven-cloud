@@ -20,6 +20,8 @@ export async function createSnapshotJobQueue({ db, repository, outbox, logger = 
 
   async function enqueue(deploymentId, { force = false, triggerType = "manual" } = {}) {
     const now = new Date().toISOString();
+    const deployment = await repository.getDeployment(deploymentId);
+    if (!deployment) throw Object.assign(new Error("地端实例不存在"), { statusCode: 404, retryable: false });
     const existing = await repository.activeSnapshotJob(deploymentId);
     if (existing) {
       const job = force && !existing.force ? await repository.forceSnapshotJob(existing.id, now) : existing;
@@ -34,10 +36,11 @@ export async function createSnapshotJobQueue({ db, repository, outbox, logger = 
           jobKey: `${SNAPSHOT_TASK}:${operationId}`,
           role: "snapshot",
           taskIdentifier: SNAPSHOT_TASK,
-          payload: { operationId },
+          payload: { operationId, tenantId: deployment.tenantId },
           maxAttempts: 5,
           aggregateType: "snapshot_job",
-          aggregateId: operationId
+          aggregateId: operationId,
+          tenantId: deployment.tenantId
         });
       });
     } catch (error) {

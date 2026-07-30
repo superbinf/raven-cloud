@@ -5,12 +5,12 @@ function bullJobId(jobKey) {
 }
 
 export function createTaskOutbox({ db, runtime, logger = console }) {
-  async function enqueue({ jobKey, role, taskIdentifier, payload = {}, maxAttempts = 3, aggregateType = null, aggregateId = null }) {
+  async function enqueue({ jobKey, role, taskIdentifier, payload = {}, maxAttempts = 3, aggregateType = null, aggregateId = null, tenantId = null }) {
     const now = new Date().toISOString();
     await db.prepare(`INSERT INTO background_task_outbox
-      (job_key,queue_role,task_identifier,payload_json,max_attempts,aggregate_type,aggregate_id,status,available_at,created_at,updated_at)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(job_key) DO NOTHING`)
-      .run(jobKey, role, taskIdentifier, JSON.stringify(payload), maxAttempts, aggregateType, aggregateId, "pending", now, now, now);
+      (job_key,queue_role,task_identifier,payload_json,max_attempts,aggregate_type,aggregate_id,tenant_id,status,available_at,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(job_key) DO NOTHING`)
+      .run(jobKey, role, taskIdentifier, JSON.stringify(payload), maxAttempts, aggregateType, aggregateId, tenantId, "pending", now, now, now);
     return { jobKey };
   }
 

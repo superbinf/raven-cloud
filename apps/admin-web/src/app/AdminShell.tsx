@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, Archive, Bug, Building2, ChevronRight, CircleGauge, CircleUserRound, Clock3, Database, Eye, FileInput, Fingerprint, Globe2, HardDrive, ImageIcon, KeyRound, LayoutDashboard, ListTodo, LockKeyhole, LogIn, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings, ShieldCheck, SlidersHorizontal, Users, Webhook } from "lucide-react";
+import { Activity, Archive, Bug, Building2, ChevronRight, CircleGauge, CircleUserRound, Clock3, Database, Eye, FileInput, Fingerprint, Globe2, HardDrive, ImageIcon, KeyRound, LayoutDashboard, ListTodo, LockKeyhole, LogIn, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ServerCog, Settings, ShieldCheck, SlidersHorizontal, Users, Webhook } from "lucide-react";
 import { type Permission, type UserRecord } from "@sentinel/shared";
 import { Button, CaptchaField, IconButton, PasswordInput, ThemeSwitcher, cn, type CaptchaChallenge, useLoginCaptcha } from "@sentinel/ui";
 import { adminApiFetch } from "../shared/api/adminApi";
@@ -42,6 +42,7 @@ const operationsNav: Array<{ label: string; items: NavItem[] }> = [
   { label: "运行保障", items: [
     { to: "/admin/operations/tasks", label: "任务中心", icon: ListTodo, permission: "operations:manage" },
     { to: "/admin/operations/schedules", label: "调度计划", icon: Clock3, permission: "operations:manage" },
+    { to: "/admin/operations/workers", label: "Worker 节点", icon: ServerCog, permission: "operations:manage" },
     { to: "/admin/operations/status", label: "运行状态", icon: Activity, permission: "operations:manage" }
   ] }
 ];
@@ -169,7 +170,7 @@ function currentPageLabel(path: string) {
     "/admin/customer-operations/portal-preview": "客户 Portal",
     "/admin/customer-operations/fingerprint-watch-groups": "指纹监测策略",
     "/admin/operations/credentials": "许可证与 API Key", "/admin/data-operations/fingerprint-library": "指纹识别库", "/admin/operations/fingerprint-icons": "指纹识别库", "/admin/operations/edge-deployments": "地端部署", "/admin/operations/tasks": "任务中心", "/admin/operations/schedules": "调度计划",
-    "/admin/operations/status": "运行状态", "/admin/operations/audit": "操作审计",
+    "/admin/operations/status": "运行状态", "/admin/operations/workers": "Worker 节点", "/admin/operations/audit": "操作审计",
     "/admin/operations/publication-policies": "发布策略", "/admin/tenant-portal": "客户 Portal", "/admin/profile": "个人中心",
     "/admin/management/customers": "客户管理", "/admin/management/users": "用户与角色", "/admin/management/password-policy": "密码策略", "/admin/management/audit": "操作审计", "/admin/management/fingerprint-library": "指纹识别库"
   };

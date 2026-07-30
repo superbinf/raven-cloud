@@ -30,6 +30,7 @@ const TaskCenterPage = lazy(() => import("../pages/TaskCenterPage").then((module
 const TargetsPage = lazy(() => import("../pages/TargetsPage").then((module) => ({ default: module.TargetsPage })));
 const TenantPortalPage = lazy(() => import("../pages/TenantPortalPage").then((module) => ({ default: module.TenantPortalPage })));
 const VulnerabilitiesPage = lazy(() => import("../pages/VulnerabilitiesPage").then((module) => ({ default: module.VulnerabilitiesPage })));
+const WorkerNodesPage = lazy(() => import("../pages/WorkerNodesPage").then((module) => ({ default: module.WorkerNodesPage })));
 
 function ScopedTargets({ canManage }: { canManage: boolean }) {
   const { tenantId } = useCustomerScope();
@@ -197,6 +198,7 @@ export function AdminRouter() {
       <Route path="operations/edge-deployments" element={allowed("operations:manage", <ScopedEdgeDeployments />)} />
       <Route path="operations/tasks" element={allowed("operations:manage", <TaskCenterPage />)} />
       <Route path="operations/schedules" element={allowed("operations:manage", <SchedulesPage />)} />
+      <Route path="operations/workers" element={allowed("operations:manage", <WorkerNodesPage />)} />
       <Route path="operations/status" element={allowed("operations:manage", <OperationsStatusPage />)} />
       <Route path="operations/publication-policies" element={allowed("ingestion:manage", <ScopedPublicationPolicies />)} />
       <Route path="management" element={<Navigate to={managementLanding} replace />} />

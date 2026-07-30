@@ -485,10 +485,10 @@ async function seedDemoData() {
   if ((await db.prepare("SELECT COUNT(*) AS count FROM credential_subscriptions").get()).count === 0) {
     await db.prepare(`INSERT INTO credential_subscriptions (id,target_id,sub_type,sub_category,user_permission_id,value,expire_time,count,tenant_id)
       VALUES (?,?,?,?,?,?,?,?,?)`).run(101, "OBJ-CHANGAN", "credential-leak", "credential", "changan-debug-permission", "changan.com.cn", "2027-12-31T23:59:59Z", 3, "TENANT-CHANGAN");
-    const insert = db.prepare("INSERT INTO credential_records (id,sub_id,url,system_name,account,password,leaked_at,source,raw_json,first_seen_at) VALUES (?,?,?,?,?,?,?,?,?,?)");
-    await insert.run("changan-demo-001", 101, "https://sso.changan.com.cn/login", "长安汽车统一身份认证（测试数据）", "test.security@changan.com.cn", "DemoOnly!2026", "2026-07-18 10:26", "local-api-debug", null, "2026-07-18 10:26");
-    await insert.run("changan-demo-002", 101, "https://vpn.changan.com.cn/", "长安汽车 VPN（测试数据）", "demo.vpn@changan.com.cn", "Debug-VPN#2026", "2026-07-18 09:42", "local-api-debug", null, "2026-07-18 09:42");
-    await insert.run("changan-demo-003", 101, "https://mail.changan.com.cn/", "长安汽车邮件系统（测试数据）", "sample.mail@changan.com.cn", "Sample-Mail@2026", "2026-07-17 22:18", "local-api-debug", null, "2026-07-17 22:18");
+    const insert = db.prepare("INSERT INTO credential_records (id,sub_id,url,system_name,account,password,leaked_at,source,raw_json,first_seen_at,tenant_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+    await insert.run("changan-demo-001", 101, "https://sso.changan.com.cn/login", "长安汽车统一身份认证（测试数据）", "test.security@changan.com.cn", "DemoOnly!2026", "2026-07-18 10:26", "local-api-debug", null, "2026-07-18 10:26", "TENANT-CHANGAN");
+    await insert.run("changan-demo-002", 101, "https://vpn.changan.com.cn/", "长安汽车 VPN（测试数据）", "demo.vpn@changan.com.cn", "Debug-VPN#2026", "2026-07-18 09:42", "local-api-debug", null, "2026-07-18 09:42", "TENANT-CHANGAN");
+    await insert.run("changan-demo-003", 101, "https://mail.changan.com.cn/", "长安汽车邮件系统（测试数据）", "sample.mail@changan.com.cn", "Sample-Mail@2026", "2026-07-17 22:18", "local-api-debug", null, "2026-07-17 22:18", "TENANT-CHANGAN");
   }
 }
 
@@ -1313,6 +1313,7 @@ async function requireTenantContext(req, res, suppliedTenantId = "") {
     json(res, 404, { message: "当前运营租户不存在或已停用" });
     return null;
   }
+  req.auditTenantId = tenantId;
   return tenantId;
 }
 async function parseDarkWebEvent(row) {
@@ -1497,6 +1498,7 @@ function auditDescriptor(method, pathname) {
     [/^\/api\/vulnerabilities(?:\/([^/]+))?(?:\/(publish))?$/u, "operations", "vulnerability", 1, (match) => match[2] ? "发布漏洞情报" : pathname.endsWith("/import") ? "导入漏洞情报" : method === "DELETE" ? "删除漏洞情报" : "更新漏洞情报"],
     [/^\/api\/credentials\/records(?:\/([^/]+))?(?:\/(publish))?$/u, "operations", "credential", 1, (match) => match[2] ? "发布账号凭据" : method === "POST" ? "新增账号凭据" : method === "DELETE" ? "删除账号凭据" : "更新账号凭据"],
     [/^\/api\/edge\/deployments(?:\/([^/]+))?(?:\/(openapi-key|license|publish-snapshot|status))?$/u, "operations", "edge-deployment", 1, (match) => match[2] === "openapi-key" ? "管理 OpenAPI Key" : match[2] === "license" ? "管理许可证" : match[2] === "publish-snapshot" ? "发布地端快照" : method === "POST" ? "创建地端部署" : method === "DELETE" ? "删除地端部署" : "更新地端部署"],
+    [/^\/api\/worker-nodes(?:\/([^/]+))?$/u, "operations", "worker-node", 1, () => method === "POST" ? "预注册 Worker 节点" : method === "DELETE" ? "清理 Worker 节点" : "更新 Worker 节点状态"],
     [/^\/api\/(background-tasks|collection-jobs|fingerprint-watch-groups|vulnerability-alerts)(?:\/([^/]+))?/u, "operations", "operations", 2, () => "执行运营配置"],
     [/^\/api\/fingerprint-icons(?:\/([^/]+))?/u, "operations", "fingerprint-icon", 1, () => pathname.endsWith("/catalog/sync") ? "更新指纹基础图标库" : method === "POST" ? "新增指纹图标" : method === "DELETE" ? "删除指纹图标" : "更新指纹图标"]
   ];
@@ -1506,17 +1508,26 @@ function auditDescriptor(method, pathname) {
   return { context: pathname.startsWith("/api/users") ? "management" : "operations", resourceType: "api", resourceId: "", action: "执行后台操作" };
 }
 
+function auditPathUsesTenant(pathname) {
+  return /^\/api\/(targets|connections|ingestion|vulnerabilities|credentials|edge\/deployments|collection-jobs|tenant-publication-policies|fingerprint-watch-groups|vulnerability-alerts)(?:\/|$)/u.test(pathname);
+}
+
 async function writeAuditLog(req, res, url, requestId) {
   if (req.method === "GET" || req.method === "OPTIONS" || !url.pathname.startsWith("/api/")) return;
   const descriptor = auditDescriptor(req.method, url.pathname); const user = req.auditUser;
   const ipAddress = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim().slice(0, 100);
   const occurredAt = new Date().toISOString();
-  await db.prepare(`INSERT INTO audit_logs (id,occurred_at,context,actor_account,actor_name,actor_role,action,resource_type,resource_id,method,path,status_code,result,ip_address,request_id,detail_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-    .run(`AUDIT-${occurredAt.replace(/\D/g, "").slice(0, 17)}-${randomBytes(5).toString("hex")}`, occurredAt, descriptor.context, user?.account || req.auditAttemptedAccount || "anonymous", user?.name || "", user?.role || roleFor(user?.role_key)?.label || "", descriptor.action, descriptor.resourceType, descriptor.resourceId, req.method, url.pathname, res.statusCode, res.statusCode < 400 ? "success" : "failed", ipAddress, requestId, JSON.stringify({ queryKeys: [...url.searchParams.keys()] }));
+  const rawTenantHeader = req.headers["x-sentinel-tenant-id"];
+  const tenantHeader = Array.isArray(rawTenantHeader) ? rawTenantHeader[0] : rawTenantHeader;
+  const tenantCandidate = String(req.auditTenantId || (auditPathUsesTenant(url.pathname) ? tenantHeader || url.searchParams.get("tenant_id") : "") || "").trim();
+  let tenantId = tenantCandidate && tenantCandidate.length <= 100 && /^[A-Za-z0-9._:-]+$/u.test(tenantCandidate) ? tenantCandidate : null;
+  if (tenantId && !await db.prepare("SELECT id FROM tenants WHERE id=?").get(tenantId)) tenantId = null;
+  await db.prepare(`INSERT INTO audit_logs (id,occurred_at,context,tenant_id,actor_account,actor_name,actor_role,action,resource_type,resource_id,method,path,status_code,result,ip_address,request_id,detail_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(`AUDIT-${occurredAt.replace(/\D/g, "").slice(0, 17)}-${randomBytes(5).toString("hex")}`, occurredAt, descriptor.context, tenantId, user?.account || req.auditAttemptedAccount || "anonymous", user?.name || "", user?.role || roleFor(user?.role_key)?.label || "", descriptor.action, descriptor.resourceType, descriptor.resourceId, req.method, url.pathname, res.statusCode, res.statusCode < 400 ? "success" : "failed", ipAddress, requestId, JSON.stringify({ queryKeys: [...url.searchParams.keys()] }));
 }
 
 function parseAuditLog(row) {
-  return { id: row.id, occurredAt: row.occurred_at, context: row.context, actorAccount: row.actor_account, actorName: row.actor_name, actorRole: row.actor_role, action: row.action, resourceType: row.resource_type, resourceId: row.resource_id, method: row.method, path: row.path, statusCode: Number(row.status_code), result: row.result, ipAddress: row.ip_address, requestId: row.request_id };
+  return { id: row.id, occurredAt: row.occurred_at, context: row.context, tenantId: row.tenant_id || null, actorAccount: row.actor_account, actorName: row.actor_name, actorRole: row.actor_role, action: row.action, resourceType: row.resource_type, resourceId: row.resource_id, method: row.method, path: row.path, statusCode: Number(row.status_code), result: row.result, ipAddress: row.ip_address, requestId: row.request_id };
 }
 
 const intelligenceTypes = ["暗网情报", "敏感泄露", "仿冒网站", "暴露面", "漏洞情报"];
@@ -1857,6 +1868,7 @@ function parseBackgroundRun(row) {
     maxAttempts: Number(row.max_attempts || 1),
     aggregateType: row.aggregate_type,
     aggregateId: row.aggregate_id,
+    tenantId: row.tenant_id || null,
     collectionJobId: row.collection_job_id,
     connectionName: row.connection_name,
     businessStatus: row.business_status,
@@ -1954,17 +1966,78 @@ const cloudEdge = createCloudEdgeModule({
 });
 
 async function workerHealth() {
-  const rows = await db.prepare(`SELECT DISTINCT ON (role) role,instance_id,process_id,started_at,last_heartbeat_at,status
+  const rows = await db.prepare(`SELECT DISTINCT ON (role) role,instance_id,node_id,process_id,started_at,last_heartbeat_at,status,applied_state
     FROM worker_instances ORDER BY role,last_heartbeat_at DESC`).all();
   const staleBefore = Date.now() - 15_000;
   return rows.map((row) => ({
     role: row.role,
     instanceId: row.instance_id,
+    nodeId: row.node_id,
     processId: Number(row.process_id),
     startedAt: row.started_at,
     lastHeartbeatAt: row.last_heartbeat_at,
+    appliedState: row.applied_state,
     healthy: row.status === "running" && new Date(row.last_heartbeat_at).getTime() >= staleBefore
   }));
+}
+
+async function listWorkerNodes() {
+  const rows = await db.prepare(`SELECT nodes.*,
+    instances.instance_id,instances.role,instances.process_id,instances.host_name,instances.concurrency,
+    instances.applied_state,instances.active_jobs,instances.started_at,instances.last_heartbeat_at,instances.stopped_at,
+    instances.status AS instance_status
+    FROM worker_nodes nodes
+    LEFT JOIN worker_instances instances ON instances.node_id=nodes.node_id
+    ORDER BY nodes.registered_at DESC,instances.role,instances.started_at DESC`).all();
+  const staleBefore = Date.now() - 15_000;
+  const nodes = new Map();
+  for (const row of rows) {
+    let node = nodes.get(row.node_id);
+    if (!node) {
+      node = {
+        nodeId: row.node_id,
+        displayName: row.display_name,
+        description: row.description,
+        desiredState: row.desired_state,
+        registeredAt: row.registered_at,
+        lastSeenAt: row.last_seen_at,
+        updatedAt: row.updated_at,
+        instances: []
+      };
+      nodes.set(row.node_id, node);
+    }
+    if (!row.instance_id) continue;
+    node.instances.push({
+      instanceId: row.instance_id,
+      role: row.role,
+      processId: Number(row.process_id),
+      hostName: row.host_name || "",
+      concurrency: Number(row.concurrency || 1),
+      appliedState: row.applied_state,
+      activeJobs: Number(row.active_jobs || 0),
+      startedAt: row.started_at,
+      lastHeartbeatAt: row.last_heartbeat_at,
+      healthy: row.instance_status === "running" && new Date(row.last_heartbeat_at).getTime() >= staleBefore
+    });
+  }
+  return [...nodes.values()].map((node) => {
+    const healthyInstances = node.instances.filter((instance) => instance.healthy);
+    const activeJobs = healthyInstances.reduce((total, instance) => total + instance.activeJobs, 0);
+    const applied = healthyInstances.map((instance) => instance.appliedState);
+    let runtimeState = "offline";
+    if (healthyInstances.length > 0) {
+      if (node.desiredState === "active") runtimeState = applied.every((state) => state === "active") ? "active" : "draining";
+      else if (node.desiredState === "draining") runtimeState = applied.every((state) => state === "draining") && activeJobs === 0 ? "drained" : "draining";
+      else runtimeState = applied.every((state) => state === "disabled") ? "disabled" : "draining";
+    }
+    return {
+      ...node,
+      runtimeState,
+      healthy: healthyInstances.length > 0,
+      activeJobs,
+      roles: [...new Set(healthyInstances.map((instance) => instance.role))]
+    };
+  });
 }
 
 const corsOrigins = new Set([
@@ -2022,17 +2095,20 @@ const requestHandler = async (req, res) => {
       const pageSize = Math.min(100, Math.max(1, Math.floor(Number(url.searchParams.get("page_size") || 50))));
       const query = String(url.searchParams.get("query") || "").trim().slice(0, 200);
       const resultFilter = String(url.searchParams.get("result") || "");
+      const tenantFilter = managedText(url.searchParams.get("tenant_id"), "客户租户", { max: 100 });
       if (resultFilter && !["success", "failed"].includes(resultFilter)) return json(res, 400, { message: "审计结果不合法" });
-      const clauses = []; const params = [];
-      if (context !== "all") { clauses.push("context=?"); params.push(context); }
+      if (tenantFilter && !await db.prepare("SELECT id FROM tenants WHERE id=?").get(tenantFilter)) return json(res, 404, { message: "客户租户不存在" });
+      const scopeClauses = []; const scopeParams = [];
+      if (context !== "all") { scopeClauses.push("context=?"); scopeParams.push(context); }
+      if (tenantFilter) { scopeClauses.push("tenant_id=?"); scopeParams.push(tenantFilter); }
+      const clauses = [...scopeClauses]; const params = [...scopeParams];
       if (query) { clauses.push("(action ILIKE ? OR actor_account ILIKE ? OR actor_name ILIKE ? OR resource_type ILIKE ? OR resource_id ILIKE ? OR path ILIKE ?)"); params.push(...Array(6).fill(`%${query}%`)); }
       if (resultFilter) { clauses.push("result=?"); params.push(resultFilter); }
       const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+      const scopeWhere = scopeClauses.length ? `WHERE ${scopeClauses.join(" AND ")}` : "";
       const total = Number((await db.prepare(`SELECT COUNT(*) AS count FROM audit_logs ${where}`).get(...params)).count);
       const rows = await db.prepare(`SELECT * FROM audit_logs ${where} ORDER BY occurred_at DESC,id DESC LIMIT ? OFFSET ?`).all(...params, pageSize, (page - 1) * pageSize);
-      const resultCounts = context === "all"
-        ? await db.prepare("SELECT result,COUNT(*) AS count FROM audit_logs GROUP BY result").all()
-        : await db.prepare("SELECT result,COUNT(*) AS count FROM audit_logs WHERE context=? GROUP BY result").all(context);
+      const resultCounts = await db.prepare(`SELECT result,COUNT(*) AS count FROM audit_logs ${scopeWhere} GROUP BY result`).all(...scopeParams);
       return json(res, 200, { page, pageSize, total, resultCounts: Object.fromEntries(resultCounts.map((row) => [row.result, Number(row.count)])), data: rows.map(parseAuditLog) });
     }
     if (url.pathname === "/api/tenant-publication-policies") {
@@ -3393,6 +3469,51 @@ const requestHandler = async (req, res) => {
         throw error;
       }
     }
+    if (req.method === "GET" && url.pathname === "/api/worker-nodes") {
+      if (!await requirePermission(req, res, "operations:manage")) return;
+      return json(res, 200, await listWorkerNodes());
+    }
+    if (req.method === "POST" && url.pathname === "/api/worker-nodes") {
+      if (!await requirePermission(req, res, "operations:manage")) return;
+      const body = await readJson(req);
+      const nodeId = managedText(body.nodeId, "节点 ID", { required: true, max: 100 });
+      if (!/^[A-Za-z0-9][A-Za-z0-9._:-]*$/u.test(nodeId)) return json(res, 400, { message: "节点 ID 只能包含字母、数字、点、下划线、冒号和连字符" });
+      if (await db.prepare("SELECT node_id FROM worker_nodes WHERE node_id=?").get(nodeId)) return json(res, 409, { message: "Worker 节点 ID 已存在" });
+      const displayName = managedText(body.displayName || nodeId, "节点名称", { required: true, max: 120 });
+      const description = managedText(body.description, "节点说明", { max: 500 });
+      const now = new Date().toISOString();
+      await db.prepare(`INSERT INTO worker_nodes
+        (node_id,display_name,description,desired_state,registered_at,updated_at)
+        VALUES (?,?,?,'disabled',?,?)`).run(nodeId, displayName, description, now, now);
+      return json(res, 201, (await listWorkerNodes()).find((item) => item.nodeId === nodeId));
+    }
+    const workerNodeMatch = url.pathname.match(/^\/api\/worker-nodes\/([^/]+)$/);
+    if (workerNodeMatch && req.method === "PUT") {
+      if (!await requirePermission(req, res, "operations:manage")) return;
+      const nodeId = decodeURIComponent(workerNodeMatch[1]);
+      const current = await db.prepare("SELECT * FROM worker_nodes WHERE node_id=?").get(nodeId);
+      if (!current) return json(res, 404, { message: "Worker 节点不存在" });
+      const body = await readJson(req);
+      const desiredState = String(body.desiredState || current.desired_state);
+      if (!["active", "draining", "disabled"].includes(desiredState)) return json(res, 400, { message: "Worker 节点状态不合法" });
+      const displayName = managedText(body.displayName ?? current.display_name, "节点名称", { required: true, max: 120 });
+      const description = managedText(body.description ?? current.description, "节点说明", { max: 500 });
+      await db.prepare("UPDATE worker_nodes SET display_name=?,description=?,desired_state=?,updated_at=? WHERE node_id=?")
+        .run(displayName, description, desiredState, new Date().toISOString(), nodeId);
+      return json(res, 200, (await listWorkerNodes()).find((item) => item.nodeId === nodeId));
+    }
+    if (workerNodeMatch && req.method === "DELETE") {
+      if (!await requirePermission(req, res, "operations:manage")) return;
+      const nodeId = decodeURIComponent(workerNodeMatch[1]);
+      const current = await db.prepare("SELECT * FROM worker_nodes WHERE node_id=?").get(nodeId);
+      if (!current) return json(res, 404, { message: "Worker 节点不存在" });
+      if (current.desired_state !== "disabled") return json(res, 409, { message: "请先禁用 Worker 节点，再清理离线记录" });
+      const staleBefore = new Date(Date.now() - 15_000).toISOString();
+      const live = Number((await db.prepare("SELECT COUNT(*) AS count FROM worker_instances WHERE node_id=? AND status='running' AND last_heartbeat_at>=?").get(nodeId, staleBefore)).count);
+      if (live > 0) return json(res, 409, { message: "Worker 节点仍在线，不能清理" });
+      await db.prepare("DELETE FROM worker_nodes WHERE node_id=?").run(nodeId);
+      return json(res, 200, { deleted: true, nodeId });
+    }
     const backgroundRunDetailMatch = url.pathname.match(/^\/api\/background-runs\/([^/]+)$/);
     if (backgroundRunDetailMatch && req.method === "GET") {
       if (!await requirePermission(req, res, "operations:manage")) return;
@@ -3410,6 +3531,7 @@ const requestHandler = async (req, res) => {
       const roleFilter = url.searchParams.get("role");
       const taskIdentifier = url.searchParams.get("task_identifier");
       const aggregateId = url.searchParams.get("aggregate_id");
+      const requestedTenantId = url.searchParams.get("tenant_id");
       const attention = url.searchParams.get("attention") === "true";
       if (state === "running") where.push("status='running'");
       else if (state === "succeeded") where.push("status='succeeded'");
@@ -3418,6 +3540,10 @@ const requestHandler = async (req, res) => {
       if (roleFilter) { where.push("queue_role=?"); params.push(roleFilter); }
       if (taskIdentifier) { where.push("task_identifier=?"); params.push(taskIdentifier); }
       if (aggregateId) { where.push("aggregate_id=?"); params.push(aggregateId); }
+      if (requestedTenantId) {
+        const tenantId = await requireTenantContext(req, res, requestedTenantId); if (!tenantId) return;
+        where.push("tenant_id=?"); params.push(tenantId);
+      }
       if (attention) where.push("(error_message IS NOT NULL OR resolved_notice_message IS NOT NULL)");
       const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") || 30)));
       const rows = await db.prepare(`WITH attempts AS (${backgroundRunSelect}), ranked_attempts AS (
@@ -3564,8 +3690,8 @@ const requestHandler = async (req, res) => {
       const leakedAt = managedText(body.leakedAt, "泄露时间", { max: 80 }) || new Date().toISOString();
       const now = new Date().toISOString(); const id = `CRED-MANUAL-${randomBytes(8).toString("hex").toUpperCase()}`;
       const published = await publicationModeFor(tenantId, "credentials") === "auto";
-      await db.prepare("INSERT INTO credential_records (id,sub_id,url,system_name,account,password,leaked_at,source,raw_json,first_seen_at,is_published,reviewed_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
-        .run(id, subId, urlValue, systemName, account, password, leakedAt, source, JSON.stringify({ manual: true }), now, published, published ? now : null);
+      await db.prepare("INSERT INTO credential_records (id,sub_id,url,system_name,account,password,leaked_at,source,raw_json,first_seen_at,is_published,reviewed_at,tenant_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        .run(id, subId, urlValue, systemName, account, password, leakedAt, source, JSON.stringify({ manual: true }), now, published, published ? now : null, tenantId);
       return json(res, 201, { id, subId, subCategory: subscription.sub_category, url: urlValue, systemName, account, password, leakedAt, firstSeenAt: now, source, isPublished: published, reviewedAt: published ? now : undefined });
     }
     const credentialPublishMatch = url.pathname.match(/^\/api\/credentials\/records\/([^/]+)\/publish$/);

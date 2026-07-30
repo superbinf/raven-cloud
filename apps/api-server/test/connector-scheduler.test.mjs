@@ -285,11 +285,31 @@ test("Hunter、WatchVuln 与凭据连接器可独立配置、全量分页入库�
   assert.equal(credentialRuns[0].status, "成功", JSON.stringify(credentialRuns[0]));
   assert.equal(credentialRuns[0].result.records, 205);
   assert.deepEqual(credentialPages, [1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-  const credentialResults = await request("/api/credentials/results?sub_id=901&page=3&page_size=100", token);
+  const credentialSubscriptions = await request("/api/credentials/subscriptions", token);
+  const storedCredentialSubscription = credentialSubscriptions.body.find((item) => item.targetId === "OBJ-CHANGAN" && item.value === "credential.example.com" && item.storedCount === 205);
+  assert.ok(Number.isSafeInteger(storedCredentialSubscription?.id));
+  assert.ok(storedCredentialSubscription.id >= 4_000_000_000_000_000);
+  const credentialResults = await request(`/api/credentials/results?sub_id=${storedCredentialSubscription.id}&page=3&page_size=100`, token);
   assert.equal(credentialResults.status, 200, JSON.stringify(credentialResults.body));
   assert.equal(credentialResults.body.total, 205);
   assert.equal(credentialResults.body.data.length, 5);
   assert.equal(credentialResults.body.data[0].sequence, 201);
+
+  const secondCredentialConnection = await request("/api/connections", token, { method: "POST", body: JSON.stringify({ name: "第二凭据数据源", providerType: "darkweb_subscription", category: "凭据泄露", endpoint: `http://127.0.0.1:${upstreamPort}`, method: "POST", apiKey: "credential-test-key", targetId: "OBJ-CHANGAN", config: { pageSize: 20, maxPages: 20 } }) });
+  assert.equal(secondCredentialConnection.status, 201, JSON.stringify(secondCredentialConnection.body));
+  const secondCredentialSync = await request(`/api/connections/${secondCredentialConnection.body.id}/sync`, token, { method: "POST" });
+  assert.equal(secondCredentialSync.status, 202, JSON.stringify(secondCredentialSync.body));
+  const secondCredentialRuns = await waitForRun((path) => request(path, token), secondCredentialSync.body.run.jobId, 1);
+  assert.equal(secondCredentialRuns[0].status, "成功", JSON.stringify(secondCredentialRuns[0]));
+  assert.equal(secondCredentialRuns[0].result.records, 205);
+  const identityInspection = new pg.Client({ connectionString: databaseUrl });
+  await identityInspection.connect();
+  await identityInspection.query(`SET search_path TO "${schema}",public`);
+  const isolatedSubscriptions = await identityInspection.query("SELECT COUNT(*)::int AS count,COUNT(DISTINCT source_connection_id)::int AS sources FROM credential_subscriptions WHERE tenant_id='TENANT-CHANGAN' AND upstream_id='901'");
+  const isolatedRecords = await identityInspection.query("SELECT COUNT(*)::int AS count,COUNT(DISTINCT source_connection_id)::int AS sources FROM credential_records WHERE tenant_id='TENANT-CHANGAN' AND upstream_id='credential-1'");
+  await identityInspection.end();
+  assert.deepEqual(isolatedSubscriptions.rows[0], { count: 2, sources: 2 });
+  assert.deepEqual(isolatedRecords.rows[0], { count: 2, sources: 2 });
 
   const job = await request("/api/collection-jobs", token, { method: "POST", body: JSON.stringify({ connectionId: connection.body.id, name: "Hunter 定时采集", intervalMinutes: 60, retryLimit: 1, enabled: false }) });
   assert.equal(job.status, 201, JSON.stringify(job.body));
@@ -356,9 +376,10 @@ test("Hunter、WatchVuln 与凭据连接器可独立配置、全量分页入库�
   runs = await waitForRun((path) => request(path, token), job.body.id, 2);
   assert.equal(runs[0].status, "成功");
   assert.equal(runs[0].attempt, 2);
-  const observedRuns = await request(`/api/background-runs?aggregate_id=${encodeURIComponent(runs[0].id)}`, token);
+  const observedRuns = await request(`/api/background-runs?tenant_id=TENANT-CHANGAN&aggregate_id=${encodeURIComponent(runs[0].id)}`, token);
   assert.equal(observedRuns.status, 200, JSON.stringify(observedRuns.body));
   assert.equal(observedRuns.body.items.length, 1);
+  assert.equal(observedRuns.body.items[0].tenantId, "TENANT-CHANGAN");
   assert.equal(observedRuns.body.items[0].state, "succeeded");
   assert.equal(observedRuns.body.items[0].attemptCount, 2);
   const runDetail = await request(`/api/background-runs/${encodeURIComponent(observedRuns.body.items[0].bullmqJobId)}`, token);
