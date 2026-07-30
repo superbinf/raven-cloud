@@ -94,8 +94,8 @@ export function AdminHome({ permissions }: { permissions: Permission[] }) {
     can("targets:read") && { to: "/admin/customer-operations/scope", icon: ContactRound, label: "客户运营", detail: "关键词与域名配置" },
     can("sources:read") && { to: "/admin/customer-operations/interfaces", icon: Cable, label: "接口配置", detail: "数据源与连接状态" },
     can("ingestion:manage") && { to: "/admin/customer-operations/ingestion/sensitive", icon: FileInput, label: "数据接入", detail: "录入与批次管理" },
-    can("operations:manage") && { to: "/admin/operations/status", icon: Gauge, label: "状态监控", detail: "服务与任务运行态势" },
-    can("operations:manage") && { to: "/admin/operations/schedules", icon: TimerReset, label: "定时任务", detail: "任务计划与运行记录" }
+    can("operations:manage") && { to: "/admin/operations/status", icon: Gauge, label: "状态监控", detail: "服务与组件运行态势" },
+    can("operations:manage") && { to: "/admin/operations/tasks", icon: TimerReset, label: "任务中心", detail: "任务执行与问题记录" }
   ].filter(Boolean).map((item) => item ? { ...item, to: `${item.to}${tenantSearch}` } : item) as Array<{ to: string; icon: ComponentType<{ size?: number }>; label: string; detail: string }>;
 
   return <>

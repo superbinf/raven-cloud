@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, Archive, Bug, Building2, ChevronRight, CircleGauge, CircleUserRound, Clock3, Database, Eye, FileInput, Fingerprint, Globe2, HardDrive, ImageIcon, KeyRound, LayoutDashboard, LockKeyhole, LogIn, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings, ShieldCheck, SlidersHorizontal, Users, Webhook } from "lucide-react";
+import { Activity, Archive, Bug, Building2, ChevronRight, CircleGauge, CircleUserRound, Clock3, Database, Eye, FileInput, Fingerprint, Globe2, HardDrive, ImageIcon, KeyRound, LayoutDashboard, ListTodo, LockKeyhole, LogIn, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Settings, ShieldCheck, SlidersHorizontal, Users, Webhook } from "lucide-react";
 import { type Permission, type UserRecord } from "@sentinel/shared";
 import { Button, CaptchaField, IconButton, PasswordInput, ThemeSwitcher, cn, type CaptchaChallenge, useLoginCaptcha } from "@sentinel/ui";
 import { adminApiFetch } from "../shared/api/adminApi";
@@ -36,6 +36,7 @@ const operationsNav: Array<{ label: string; items: NavItem[] }> = [
   { label: "运营管理", items: [
     { to: "/admin/operations/credentials", label: "部署凭据", icon: KeyRound, permission: "operations:manage" },
     { to: "/admin/operations/edge-deployments", label: "地端部署", icon: HardDrive, permission: "operations:manage" },
+    { to: "/admin/operations/tasks", label: "任务中心", icon: ListTodo, permission: "operations:manage" },
     { to: "/admin/operations/schedules", label: "定时任务", icon: Clock3, permission: "operations:manage" },
     { to: "/admin/operations/status", label: "状态监控", icon: Activity, permission: "operations:manage" },
     { to: "/admin/operations/publication-policies", label: "发布策略", icon: SlidersHorizontal, permission: "ingestion:manage" }
@@ -159,7 +160,7 @@ function currentPageLabel(path: string) {
     "/admin/customer-operations/publication-policies": "发布策略",
     "/admin/customer-operations/portal-preview": "客户 Portal",
     "/admin/customer-operations/fingerprint-watch-groups": "重点指纹监测",
-    "/admin/operations/credentials": "部署凭据", "/admin/data-operations/fingerprint-library": "指纹识别库", "/admin/operations/fingerprint-icons": "指纹识别库", "/admin/operations/edge-deployments": "地端部署", "/admin/operations/schedules": "定时任务",
+    "/admin/operations/credentials": "部署凭据", "/admin/data-operations/fingerprint-library": "指纹识别库", "/admin/operations/fingerprint-icons": "指纹识别库", "/admin/operations/edge-deployments": "地端部署", "/admin/operations/tasks": "任务中心", "/admin/operations/schedules": "定时任务",
     "/admin/operations/status": "状态监控", "/admin/operations/audit": "日志审计",
     "/admin/operations/publication-policies": "发布策略", "/admin/tenant-portal": "客户 Portal", "/admin/profile": "个人中心",
     "/admin/management/customers": "客户管理", "/admin/management/users": "用户配置", "/admin/management/password-policy": "密码策略", "/admin/management/audit": "日志审计"

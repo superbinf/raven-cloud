@@ -655,9 +655,18 @@ html { overflow-x: hidden; }
 .vulnerability-admin-table { min-width: 1160px; }
 .vulnerability-admin-table .admin-table-head, .vulnerability-admin-table .admin-table-row { grid-template-columns: 64px 56px minmax(240px, 1.6fr) 64px minmax(110px, .65fr) 116px 88px 196px; }
 .schedule-table { min-width: 1200px; }
-.schedule-table .admin-table-head, .schedule-table .admin-table-row { grid-template-columns: 56px minmax(180px, 1.2fr) minmax(150px, .9fr) 110px 100px minmax(130px, .9fr) 70px 55px 150px; }
+.schedule-table .admin-table-head, .schedule-table .admin-table-row { grid-template-columns: 56px minmax(180px, 1.2fr) minmax(150px, .9fr) 110px minmax(130px, .9fr) 70px 55px 150px; }
 .background-task-table { min-width: 1160px; }
 .background-task-table .admin-table-head, .background-task-table .admin-table-row { grid-template-columns: 56px minmax(210px, 1.3fr) 95px 125px 115px 115px 55px 154px; }
+.task-center-table { min-width: 940px; }
+.task-center-table .admin-table-head, .task-center-table .admin-table-row { grid-template-columns: 56px minmax(190px, 1.35fr) 115px minmax(115px, .8fr) 100px 120px 100px; }
+.collection-task-table { min-width: 880px; }
+.collection-task-table .admin-table-head, .collection-task-table .admin-table-row { grid-template-columns: 56px minmax(220px, 1.35fr) minmax(170px, 1fr) 120px 135px 116px; }
+.task-center-table .admin-table-row > div strong, .task-center-table .admin-table-row > div small,
+.collection-task-table .admin-table-row > div strong, .collection-task-table .admin-table-row > div small { display: block; }
+.task-center-table .admin-table-row > div strong, .collection-task-table .admin-table-row > div strong { color: var(--text); font-size: 12px; }
+.task-center-table .admin-table-row > div small, .collection-task-table .admin-table-row > div small { margin-top: 4px; color: var(--text-muted); font-size: 9px; }
+.task-trigger-note { display: inline-flex; align-items: center; gap: 5px; color: var(--text-muted); font-size: 10px; }
 .background-run-table { min-width: 1200px; }
 .background-run-table .admin-table-head, .background-run-table .admin-table-row { grid-template-columns: 56px minmax(220px, 1.35fr) 105px 70px 65px 115px 125px minmax(230px, 1.4fr) 62px; }
 .background-run-table .admin-table-row > div:nth-child(2) strong, .background-run-table .admin-table-row > div:nth-child(2) small { display: block; }
@@ -829,15 +838,23 @@ html { overflow-x: hidden; }
 
   .panel:has(.background-task-table) .panel-body,
   .panel:has(.schedule-table) .panel-body,
+  .panel:has(.task-center-table) .panel-body,
+  .panel:has(.collection-task-table) .panel-body,
   .panel:has(.background-run-table) .panel-body { overflow-x: visible; }
   .background-task-table,
   .schedule-table,
+  .task-center-table,
+  .collection-task-table,
   .background-run-table { width: 100%; min-width: 0; }
   .background-task-table .admin-table-head,
   .schedule-table .admin-table-head,
+  .task-center-table .admin-table-head,
+  .collection-task-table .admin-table-head,
   .background-run-table .admin-table-head { display: none; }
   .background-task-table .admin-table-row,
   .schedule-table .admin-table-row,
+  .task-center-table .admin-table-row,
+  .collection-task-table .admin-table-row,
   .background-run-table .admin-table-row {
     min-height: 0;
     padding: 16px 14px;
@@ -848,9 +865,13 @@ html { overflow-x: hidden; }
   }
   .background-task-table .admin-sequence-cell,
   .schedule-table .admin-sequence-cell,
+  .task-center-table .admin-sequence-cell,
+  .collection-task-table .admin-sequence-cell,
   .background-run-table .admin-sequence-cell { display: none; }
   .background-task-table .schedule-card-title,
   .schedule-table .schedule-card-title,
+  .task-center-table .schedule-card-title,
+  .collection-task-table .schedule-card-title,
   .background-run-table .schedule-card-title {
     grid-column: 1 / -1;
     padding-bottom: 12px;
@@ -858,6 +879,8 @@ html { overflow-x: hidden; }
   }
   .background-task-table .admin-table-row > [data-label],
   .schedule-table .admin-table-row > [data-label],
+  .task-center-table .admin-table-row > [data-label],
+  .collection-task-table .admin-table-row > [data-label],
   .background-run-table .admin-table-row > [data-label] {
     min-width: 0;
     display: grid;
@@ -869,6 +892,8 @@ html { overflow-x: hidden; }
   }
   .background-task-table .admin-table-row > [data-label]::before,
   .schedule-table .admin-table-row > [data-label]::before,
+  .task-center-table .admin-table-row > [data-label]::before,
+  .collection-task-table .admin-table-row > [data-label]::before,
   .background-run-table .admin-table-row > [data-label]::before {
     content: attr(data-label);
     color: var(--text-muted);
@@ -879,6 +904,8 @@ html { overflow-x: hidden; }
   .schedule-switch-cell .switch { min-height: 28px; margin: 0; }
   .background-task-table .background-task-actions,
   .schedule-table .background-task-actions,
+  .task-center-table .background-task-actions,
+  .collection-task-table .background-task-actions,
   .background-run-table .background-run-actions {
     grid-column: 1 / -1;
     min-height: 44px;
@@ -890,5 +917,7 @@ html { overflow-x: hidden; }
   }
   .background-task-table .text-action,
   .schedule-table .text-action,
+  .task-center-table .text-action,
+  .collection-task-table .text-action,
   .background-run-table .text-action { min-height: 44px; padding-inline: 14px; }
 }

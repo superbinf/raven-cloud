@@ -26,6 +26,7 @@ const PasswordPolicyPage = lazy(() => import("../pages/PasswordPolicyPage").then
 const ProfilePage = lazy(() => import("../pages/ProfilePage").then((module) => ({ default: module.ProfilePage })));
 const PublicationPoliciesPage = lazy(() => import("../pages/TenantOperationsPages").then((module) => ({ default: module.PublicationPoliciesPage })));
 const SchedulesPage = lazy(() => import("../pages/SchedulesPage").then((module) => ({ default: module.SchedulesPage })));
+const TaskCenterPage = lazy(() => import("../pages/TaskCenterPage").then((module) => ({ default: module.TaskCenterPage })));
 const TargetsPage = lazy(() => import("../pages/TargetsPage").then((module) => ({ default: module.TargetsPage })));
 const TenantPortalPage = lazy(() => import("../pages/TenantPortalPage").then((module) => ({ default: module.TenantPortalPage })));
 const VulnerabilitiesPage = lazy(() => import("../pages/VulnerabilitiesPage").then((module) => ({ default: module.VulnerabilitiesPage })));
@@ -188,6 +189,7 @@ export function AdminRouter() {
       <Route path="data-operations/fingerprint-library" element={allowed("ingestion:manage", <FingerprintIconsPage />)} />
       <Route path="operations/credentials" element={allowed("operations:manage", <ScopedDeploymentCredentials />)} />
       <Route path="operations/edge-deployments" element={allowed("operations:manage", <ScopedEdgeDeployments />)} />
+      <Route path="operations/tasks" element={allowed("operations:manage", <TaskCenterPage />)} />
       <Route path="operations/schedules" element={allowed("operations:manage", <SchedulesPage />)} />
       <Route path="operations/status" element={allowed("operations:manage", <OperationsStatusPage />)} />
       <Route path="operations/publication-policies" element={allowed("ingestion:manage", <ScopedPublicationPolicies />)} />
@@ -203,6 +205,7 @@ export function AdminRouter() {
       <Route path="accounts" element={<Navigate to="../management/users" replace />} />
       <Route path="targets" element={<Navigate to="../customer-operations/scope" replace />} />
       <Route path="schedules" element={<Navigate to="../operations/schedules" replace />} />
+      <Route path="tasks" element={<Navigate to="../operations/tasks" replace />} />
       <Route path="audit" element={<Navigate to="../management/audit" replace />} />
       <Route path="fingerprint-watch-groups" element={<Navigate to="../customer-operations/fingerprint-watch-groups" replace />} />
       <Route path="interfaces" element={<Navigate to="../customer-operations/interfaces" replace />} />
