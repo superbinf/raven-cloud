@@ -33,7 +33,7 @@ sequenceDiagram
 
 地端业务文件位于 `files/objects/<sha256>/content`，相同 SHA-256 只保存一个对象，`synced_files.local_path` 可直接读取。下载使用临时目录，大小和哈希校验通过后原子改名；数据库事务失败时清理本次新建对象和快照目录，上一成功版本保持不变。
 
-快照目录清理默认不自动执行。`EDGE_SNAPSHOT_RETENTION_VERSIONS` 默认值为 `2`，执行 `npm run edge:snapshots:cleanup` 只做 dry-run，确认列表后再追加 `--apply`。清理脚本不会触碰当前业务数据库中的投影数据。
+Edge Python Worker 在同步成功后按 `EDGE_SNAPSHOT_RETENTION_VERSIONS` 自动清理旧快照归档，默认保留 2 个版本。也可在 `sentinel-edge` 中执行 `npm run edge:snapshots:cleanup` 预览清单，确认后追加 `-- --apply`；清理不会触碰当前业务数据库中的投影数据。
 
 ## 故障处理
 

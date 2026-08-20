@@ -12,8 +12,6 @@ node_modules
 release
 data
 apps/api-server/data
-apps/edge-server/data
-apps/edge-server/activation.json
 apps/*/dist
 apps/*/node_modules
 *.dump
