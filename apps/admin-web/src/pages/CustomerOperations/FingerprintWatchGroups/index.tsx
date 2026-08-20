@@ -20,7 +20,7 @@ import {
   TablePagination,
   useClientPagination,
 } from "@/components/business/TablePagination";
-import { listEdgeTenants, type EdgeTenant } from "../features/edge-deployments";
+import { listEdgeTenants, type EdgeTenant } from "@/features/edge-deployments";
 import { adminApiFetch as apiFetch } from "@/api/admin";
 import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 
