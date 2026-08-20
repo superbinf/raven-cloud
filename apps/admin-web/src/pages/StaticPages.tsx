@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { AlertTriangle, Archive, Bot, RefreshCw, Search } from "lucide-react";
-import { Button, Panel, StatusDot, Tag } from "@sentinel/ui";
-import { PageHeader, SequenceCell, SequenceHeader } from "../components/AdminPrimitives";
-import { TablePagination } from "../components/TablePagination";
-import { adminApiFetch } from "../shared/api/adminApi";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
+import { Button, Panel, StatusDot, Tag } from "@/components/common";
+import { PageHeader, SequenceCell, SequenceHeader } from "@/components/business/AdminPrimitives";
+import { TablePagination } from "@/components/business/TablePagination";
+import { adminApiFetch } from "@/api/admin";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 
 export function AiPage() {
   return <><PageHeader eyebrow="AI ORCHESTRATION" title="AI 中心" description="配置模型供应商、任务路由、提示词模板、脱敏策略和调用预算。" /><Panel><div className="inline-empty"><Bot size={28} /><strong>AI 能力尚未配置</strong><span>当前没有模型供应商、调用记录或路由配置的真实后端数据。</span><small>[WIP] 完成服务端模型配置、调用审计和测试接口后再开放操作。</small></div></Panel></>;

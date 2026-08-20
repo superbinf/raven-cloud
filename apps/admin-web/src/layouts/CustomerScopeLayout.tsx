@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, type ReactNode } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import type { EdgeTenant } from "../features/edge-deployments";
-import { storeAdminTenantContext } from "../shared/api/adminApi";
+import { storeAdminTenantContext } from "@/api/admin";
 
 type CustomerScope = {
   tenantId: string;

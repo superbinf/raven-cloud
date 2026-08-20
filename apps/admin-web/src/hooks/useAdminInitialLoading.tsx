@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { PlatformLoading } from "@sentinel/ui";
+import { PlatformLoading } from "@/components/common";
 
 type LoadingReporter = (key: string, loading: boolean) => void;
 

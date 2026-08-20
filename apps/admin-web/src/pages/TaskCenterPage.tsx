@@ -20,21 +20,21 @@ import {
   type BackgroundRunState,
   type CollectionJob,
 } from "@sentinel/shared";
-import { Button, Modal, Panel, StatusDot, Tag } from "@sentinel/ui";
+import { Button, Modal, Panel, StatusDot, Tag } from "@/components/common";
 import {
   PageHeader,
   SequenceCell,
   SequenceHeader,
   Toast,
   type ToastState,
-} from "../components/AdminPrimitives";
+} from "@/components/business/AdminPrimitives";
 import {
   TablePagination,
   useClientPagination,
-} from "../components/TablePagination";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
-import { useCustomerScope } from "../app/CustomerScopeLayout";
-import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
+} from "@/components/business/TablePagination";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
+import { useCustomerScope } from "@/layouts";
+import { adminApiFetch as apiFetch } from "@/api/admin";
 
 type BackgroundTask = {
   identifier: string;

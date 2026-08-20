@@ -1,6 +1,6 @@
 import { Check, Copy, Download, KeyRound } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@sentinel/ui";
+import { Button } from "@/components/common";
 import type { EdgeActivationConfig, EdgeCredentialDelivery } from "../model/types";
 import styles from "../edgeDeployments.module.css";
 

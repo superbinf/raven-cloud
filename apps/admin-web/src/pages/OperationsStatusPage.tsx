@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, CheckCircle2, Clock3, Database, RefreshCw, ServerCog } from "lucide-react";
 import type { ApiConnection, BackgroundRun } from "@sentinel/shared";
-import { Button, Panel, StatusDot, Tag } from "@sentinel/ui";
-import { PageHeader, Toast, type ToastState } from "../components/AdminPrimitives";
-import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
-import { useCustomerScope } from "../app/CustomerScopeLayout";
+import { Button, Panel, StatusDot, Tag } from "@/components/common";
+import { PageHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
+import { adminApiFetch as apiFetch } from "@/api/admin";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
+import { useCustomerScope } from "@/layouts";
 
 type BackgroundOverview = {
   queue: { pending: number; running: number; permanentlyFailed: number; oldestWaitingMs: number };

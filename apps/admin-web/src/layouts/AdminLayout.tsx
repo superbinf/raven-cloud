@@ -1,16 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Activity, Archive, Bug, Building2, ChevronRight, CircleGauge, CircleUserRound, Clock3, Database, Eye, FileInput, Fingerprint, Globe2, HardDrive, ImageIcon, KeyRound, LayoutDashboard, ListTodo, LockKeyhole, LogIn, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ServerCog, Settings, ShieldCheck, SlidersHorizontal, Users, Webhook } from "lucide-react";
-import { type Permission, type UserRecord } from "@sentinel/shared";
-import { Button, CaptchaField, IconButton, PasswordInput, ThemeSwitcher, cn, type CaptchaChallenge, useLoginCaptcha } from "@sentinel/ui";
-import { adminApiFetch } from "../shared/api/adminApi";
+import { type Permission } from "@sentinel/shared";
+import { Button, CaptchaField, IconButton, PasswordInput, ThemeSwitcher, cn, type CaptchaChallenge, useLoginCaptcha } from "@/components/common";
+import { adminApiFetch } from "@/api/admin";
+import type { AdminSession } from "@/types";
 import { useCustomerScope } from "./CustomerScopeLayout";
 
-export type AdminSession = {
-  token: string;
-  expiresAt: string;
-  user: UserRecord;
-};
 type OtpChallenge = { otpRequired: true; account: string; challengeId: string; expiresAt: string };
 const loadCaptcha = () => adminApiFetch<CaptchaChallenge>("/api/auth/captcha");
 
@@ -61,24 +57,6 @@ const managementNav: Array<{ label: string; items: NavItem[] }> = [
   ] }
 ];
 
-export const adminSessionKey = "sentinel.admin.session";
-
-export function readAdminSession(): AdminSession | null {
-  try {
-    const value = window.sessionStorage.getItem(adminSessionKey);
-    if (!value) return null;
-    const session = JSON.parse(value) as AdminSession;
-    if (!session.token || new Date(session.expiresAt).getTime() <= Date.now() || !["admin", "both"].includes(session.user.workspace) || !Array.isArray(session.user.permissions)) {
-      window.sessionStorage.removeItem(adminSessionKey);
-      return null;
-    }
-    return session;
-  } catch {
-    window.sessionStorage.removeItem(adminSessionKey);
-    return null;
-  }
-}
-
 function AdminBrand({ mode = "operations" }: { mode?: WorkspaceMode }) {
   const home = mode === "management" ? "/admin/management" : "/admin";
   const label = mode === "management" ? "云端管理后台" : "云端运营平台";
@@ -95,7 +73,6 @@ export function AdminLogin({ onLogin }: { onLogin: (session: AdminSession) => vo
   const captcha = useLoginCaptcha(loadCaptcha);
   const finishLogin = (response: AdminSession) => {
     if (!["admin", "both"].includes(response.user.workspace)) throw new Error("当前账号无云端运营权限");
-    window.sessionStorage.setItem(adminSessionKey, JSON.stringify(response));
     onLogin(response);
   };
   const submit = async (event: FormEvent<HTMLFormElement>) => {

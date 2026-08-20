@@ -1,10 +1,10 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { AlertTriangle, CheckCircle2, Database, Globe2, ImageIcon, Pencil, Plus, RefreshCw, Search, Trash2, Upload } from "lucide-react";
-import { Button, Modal, Panel, Tag } from "@sentinel/ui";
-import { DeleteConfirmation, PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "../components/AdminPrimitives";
-import { TablePagination } from "../components/TablePagination";
-import { adminApiFetch as apiFetch, adminApiUrl } from "../shared/api/adminApi";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
+import { Button, Modal, Panel, Tag } from "@/components/common";
+import { DeleteConfirmation, PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
+import { TablePagination } from "@/components/business/TablePagination";
+import { adminApiFetch as apiFetch, adminApiUrl } from "@/api/admin";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 
 type IconSource = "upload" | "favicon" | "iconify" | "simple-icons" | "domestic" | "provider" | "custom";
 type FingerprintIconRecord = {

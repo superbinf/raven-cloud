@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createEdgeDeployment, deleteEdgeDeployment, generateEdgeApiKey, getEdgeDeploymentStatus, issueEdgeLicense, listEdgeDeployments, listEdgeTenants, publishEdgeSnapshot, revokeEdgeApiKey, revokeEdgeLicense, rotateEdgeActivation, updateEdgeApiKey, updateEdgeLicense, updateEdgeDeployment } from "../api/edgeDeploymentsApi";
 import type { EdgeActivationConfig, EdgeCredentialDelivery, EdgeDeployment, EdgeDeploymentInput, EdgeDeploymentStatus, EdgeTenant } from "../model/types";
-import { useAdminInitialLoading } from "../../../app/AdminInitialLoading";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 
 export function useEdgeDeployments() {
   const [deployments, setDeployments] = useState<EdgeDeployment[]>([]);

@@ -1,11 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import "@/assets/styles/globals.css";
 import "@sentinel/ui/styles.css";
-import "./admin.css";
-import "./changan-theme.css";
-import { AdminApp } from "./App";
-import { GlobalErrorBoundary, initializeUiTheme } from "@sentinel/ui";
+import "@/assets/styles/admin.css";
+import "@/assets/styles/changan-theme.css";
+import { AdminApp } from "@/App";
+import { GlobalErrorBoundary, initializeUiTheme } from "@/components/common";
 
 initializeUiTheme();
 

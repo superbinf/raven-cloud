@@ -20,7 +20,7 @@ import {
   X
 } from "lucide-react";
 
-import { Button, EmptyState, IconButton } from "@sentinel/ui";
+import { Button, EmptyState, IconButton } from "@/components/common";
 import { ChinaThreatMap, ThreatTrendChart } from "../charts";
 
 import { usePortalDashboard } from "../hooks/usePortalDashboard";

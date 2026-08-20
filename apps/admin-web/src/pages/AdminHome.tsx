@@ -17,11 +17,11 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { type AdminDashboardMetric, type AdminDashboardResult, type Permission } from "@sentinel/shared";
-import { Button, Panel, StatusDot, Tag } from "@sentinel/ui";
-import { AdminTrendChart, PageHeader } from "../components/AdminPrimitives";
-import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
-import { useCustomerScope } from "../app/CustomerScopeLayout";
+import { Button, Panel, StatusDot, Tag } from "@/components/common";
+import { AdminTrendChart, PageHeader } from "@/components/business/AdminPrimitives";
+import { adminApiFetch as apiFetch } from "@/api/admin";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
+import { useCustomerScope } from "@/layouts";
 
 type DashboardMetric = AdminDashboardMetric & { context: string; icon: ComponentType<{ size?: number }> };
 

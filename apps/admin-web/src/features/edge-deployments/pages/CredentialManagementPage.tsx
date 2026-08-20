@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Ban, CalendarClock, KeyRound, RefreshCw, RotateCw, ShieldCheck } from "lucide-react";
-import { Button, Modal, Panel, StatusDot, Tag } from "@sentinel/ui";
-import { PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "../../../components/AdminPrimitives";
+import { Button, Modal, Panel, StatusDot, Tag } from "@/components/common";
+import { PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { CredentialDeliveryPanel } from "../components/ActivationConfigPanel";
 import { useEdgeDeployments } from "../hooks/useEdgeDeployments";
 import type { EdgeDeployment } from "../model/types";

@@ -1,4 +1,4 @@
-function resolveCloudApiBaseUrl(value?: string) {
+export function resolveCloudApiBaseUrl(value?: string) {
   const normalized = (value ?? "").trim().replace(/\/$/, "");
   if (!normalized) return "";
   const url = new URL(normalized);

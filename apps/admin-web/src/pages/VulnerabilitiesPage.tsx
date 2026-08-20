@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Bug, Download, FileSpreadsheet, Pencil, Plus, Search, Send, Trash2, Upload } from "lucide-react";
 import type { MonitoringTarget, RiskLevel, VulnerabilityPageResult, VulnerabilityRecord } from "@sentinel/shared";
-import { Button, EmptyState, Modal, Panel, RiskBadge, Tag } from "@sentinel/ui";
-import { DeleteConfirmation, PageHeader, SelectionCell, SelectionHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "../components/AdminPrimitives";
-import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
+import { Button, EmptyState, Modal, Panel, RiskBadge, Tag } from "@/components/common";
+import { DeleteConfirmation, PageHeader, SelectionCell, SelectionHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
+import { adminApiFetch as apiFetch } from "@/api/admin";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 
 const riskOptions: Array<{ value: "" | RiskLevel; label: string }> = [
   { value: "", label: "全部风险" }, { value: "critical", label: "严重" }, { value: "high", label: "高危" },

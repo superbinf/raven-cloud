@@ -14,7 +14,7 @@ import {
   RotateCcw,
   Settings2,
 } from "lucide-react";
-import { cn } from "@sentinel/ui";
+import { cn } from "@/components/common";
 
 export type ListViewColumn = {
   id: string;

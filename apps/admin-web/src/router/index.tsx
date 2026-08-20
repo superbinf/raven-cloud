@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import type { Permission, UserRecord } from "@sentinel/shared";
-import { PlatformLoading } from "@sentinel/ui";
-import { AdminLayout, AdminLogin, adminSessionKey, readAdminSession, type AdminSession } from "./AdminShell";
-import { AdminInitialLoadingProvider } from "./AdminInitialLoading";
-import { CustomerScopeLayout, useCustomerScope } from "./CustomerScopeLayout";
-import { adminApiFetch } from "../shared/api/adminApi";
+import { PlatformLoading } from "@/components/common";
+import { AdminLayout, AdminLogin, CustomerScopeLayout, useCustomerScope } from "@/layouts";
+import { readAdminSession, useAdminSessionStore } from "@/store";
+import type { AdminSession } from "@/types";
+import { AdminInitialLoadingProvider } from "@/hooks/useAdminInitialLoading";
+import { adminApiFetch } from "@/api/admin";
 import { listEdgeTenants } from "../features/edge-deployments/api/edgeDeploymentsApi";
 import type { EdgeTenant } from "../features/edge-deployments/model/types";
 
@@ -89,7 +90,9 @@ function LegacyCustomerRedirect() {
 
 export function AdminRouter() {
   const location = useLocation();
-  const [session, setSession] = useState<AdminSession | null>(() => readAdminSession());
+  const session = useAdminSessionStore((state) => state.session);
+  const setSession = useAdminSessionStore((state) => state.setSession);
+  const clearSession = useAdminSessionStore((state) => state.clearSession);
   const [checkingSession, setCheckingSession] = useState(true);
   const [customerScope, setCustomerScope] = useState<{ tenants: EdgeTenant[]; error: string } | null>(null);
 
@@ -107,20 +110,18 @@ export function AdminRouter() {
         const current = readAdminSession();
         if (!current) throw new Error("登录状态已失效");
         const next = { ...current, user };
-        window.sessionStorage.setItem(adminSessionKey, JSON.stringify(next));
         setSession(next);
       })
       .catch(() => {
         if (!active) return;
-        window.sessionStorage.removeItem(adminSessionKey);
-        setSession(null);
+        clearSession();
       })
       .finally(() => {
         if (active) setCheckingSession(false);
       });
 
     return () => { active = false; };
-  }, []);
+  }, [clearSession, setSession]);
 
   const customerScopeRoute = location.pathname.startsWith("/admin") && (!location.pathname.startsWith("/admin/management") || location.pathname === "/admin/management/customers");
   const shouldLoadCustomerScope = Boolean(
@@ -145,9 +146,8 @@ export function AdminRouter() {
 
   const logout = () => {
     void adminApiFetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
-    window.sessionStorage.removeItem(adminSessionKey);
+    clearSession();
     setCustomerScope(null);
-    setSession(null);
   };
   const login = (nextSession: AdminSession) => {
     setCustomerScope(null);
@@ -156,7 +156,6 @@ export function AdminRouter() {
   const updateSessionUser = (user: UserRecord) => {
     if (!session) return;
     const next = { ...session, user };
-    window.sessionStorage.setItem(adminSessionKey, JSON.stringify(next));
     setSession(next);
   };
   const allowed = (permission: Permission, element: ReactNode) => session?.user.permissions.includes(permission) ? element : <Navigate to="/admin" replace />;

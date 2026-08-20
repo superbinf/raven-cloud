@@ -12,20 +12,20 @@ import {
   type ApiConnection,
   type CollectionJob,
 } from "@sentinel/shared";
-import { Button, Modal, Panel, Tag } from "@sentinel/ui";
+import { Button, Modal, Panel, Tag } from "@/components/common";
 import {
   PageHeader,
   SequenceCell,
   SequenceHeader,
   Toast,
   type ToastState,
-} from "../components/AdminPrimitives";
+} from "@/components/business/AdminPrimitives";
 import {
   TablePagination,
   useClientPagination,
-} from "../components/TablePagination";
-import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
+} from "@/components/business/TablePagination";
+import { adminApiFetch as apiFetch } from "@/api/admin";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 
 type ScheduleType = "interval" | "daily" | "weekly";
 type BackgroundTask = {

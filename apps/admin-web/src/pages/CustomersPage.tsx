@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Building2, CircleOff, Pencil, Plus, Power, RefreshCw, Search, Trash2 } from "lucide-react";
-import { Button, Modal, Panel, StatusDot } from "@sentinel/ui";
-import { DeleteConfirmation, PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "../components/AdminPrimitives";
+import { Button, Modal, Panel, StatusDot } from "@/components/common";
+import { DeleteConfirmation, PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { createEdgeTenant, deleteEdgeTenant, listEdgeTenants, updateEdgeTenant, type EdgeTenant } from "../features/edge-deployments";
 
 export function CustomersPage({ tenants, canManage, onChanged }: { tenants: EdgeTenant[]; canManage: boolean; onChanged: (tenants: EdgeTenant[]) => void }) {

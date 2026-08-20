@@ -2,11 +2,11 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 
 import { AlertTriangle, CheckCircle2, Download, Eye, FileStack, LoaderCircle, UploadCloud, X } from "lucide-react";
 import { type IngestionBatch, type IngestionType, type MonitoringTarget } from "@sentinel/shared";
-import { Button, Modal, Panel, Tag } from "@sentinel/ui";
-import { PageHeader, Toast, type ToastState } from "../components/AdminPrimitives";
-import { IngestionRecordManager } from "../components/IngestionRecordManager";
-import { adminApiFetch as apiFetch, adminApiRequestHeaders, adminApiUrl } from "../shared/api/adminApi";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
+import { Button, Modal, Panel, Tag } from "@/components/common";
+import { PageHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
+import { IngestionRecordManager } from "@/components/business/IngestionRecordManager";
+import { adminApiFetch as apiFetch, adminApiRequestHeaders, adminApiUrl } from "@/api/admin";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 
 type IngestionMode = IngestionType;
 type UploadState = { phase: "idle" | "uploading" | "success" | "error"; fileName?: string; message?: string; batch?: IngestionBatch };

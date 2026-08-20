@@ -1,4 +1,4 @@
-import { adminApiFetch } from "../../../shared/api/adminApi";
+import { adminApiFetch } from "@/api/admin";
 import type { EdgeActivationConfig, EdgeCredentialDelivery, EdgeDeployment, EdgeDeploymentInput, EdgeDeploymentStatus, EdgeSnapshotJob, EdgeTenant, EdgeLicense } from "../model/types";
 
 export function listEdgeTenants() {

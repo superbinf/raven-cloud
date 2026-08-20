@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import type { EdgePortalModule } from "@sentinel/contracts";
-import { PlatformLoading } from "@sentinel/ui";
+import { PlatformLoading } from "@/components/common";
 import { PortalLayout, readPortalSession } from "./app/PortalShell";
 import { moduleConfigs, sensitiveCategoryBySubtype, type ModuleConfig } from "./config/modules";
 

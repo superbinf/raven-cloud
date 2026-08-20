@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Check, CircleAlert, Clock3, History, KeyRound, LockKeyhole, Minus, Plus, Save, ShieldCheck } from "lucide-react";
 import type { PasswordPolicy } from "@sentinel/shared";
-import { Button, IconButton } from "@sentinel/ui";
-import { PageHeader, Toast, type ToastState } from "../components/AdminPrimitives";
-import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
+import { Button, IconButton } from "@/components/common";
+import { PageHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
+import { adminApiFetch as apiFetch } from "@/api/admin";
 
 const defaultPolicy: PasswordPolicy = {
   minLength: 12,

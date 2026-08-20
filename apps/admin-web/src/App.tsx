@@ -1,4 +1,4 @@
-import { AdminRouter } from "./app/AdminRouter";
+import { AdminRouter } from "@/router";
 
 export function AdminApp() {
   return <AdminRouter />;

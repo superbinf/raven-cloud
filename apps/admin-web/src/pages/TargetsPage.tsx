@@ -1,20 +1,20 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Globe2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { type MonitoringTarget } from "@sentinel/shared";
-import { Button, IconButton, Modal, Panel, Tag } from "@sentinel/ui";
+import { Button, IconButton, Modal, Panel, Tag } from "@/components/common";
 import {
   DeleteConfirmation,
   PageHeader,
   Toast,
   type ToastState,
-} from "../components/AdminPrimitives";
+} from "@/components/business/AdminPrimitives";
 import {
   TablePagination,
   useClientPagination,
-} from "../components/TablePagination";
+} from "@/components/business/TablePagination";
 import { listEdgeTenants, type EdgeTenant } from "../features/edge-deployments";
-import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
+import { adminApiFetch as apiFetch } from "@/api/admin";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 
 const splitLines = (value: FormDataEntryValue | null) => [
   ...new Set(

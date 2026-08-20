@@ -6,7 +6,7 @@ import {
   type IntelligencePageResult,
   type IntelType,
 } from "@sentinel/shared";
-import { Button, EmptyState, Panel, RiskBadge, Tag } from "@sentinel/ui";
+import { Button, EmptyState, Panel, RiskBadge, Tag } from "@/components/common";
 import type { EdgePortalModule } from "@sentinel/contracts";
 
 import {

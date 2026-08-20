@@ -9,20 +9,20 @@ import {
   Trash2,
 } from "lucide-react";
 import type { FingerprintWatchGroup } from "@sentinel/shared";
-import { Button, EmptyState, IconButton, Modal, Panel, StatusDot, Tag } from "@sentinel/ui";
+import { Button, EmptyState, IconButton, Modal, Panel, StatusDot, Tag } from "@/components/common";
 import {
   DeleteConfirmation,
   PageHeader,
   Toast,
   type ToastState,
-} from "../components/AdminPrimitives";
+} from "@/components/business/AdminPrimitives";
 import {
   TablePagination,
   useClientPagination,
-} from "../components/TablePagination";
+} from "@/components/business/TablePagination";
 import { listEdgeTenants, type EdgeTenant } from "../features/edge-deployments";
-import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
+import { adminApiFetch as apiFetch } from "@/api/admin";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 
 type ItemDraft = {
   productName: string;

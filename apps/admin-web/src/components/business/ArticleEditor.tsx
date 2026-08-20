@@ -17,7 +17,7 @@ import {
   Underline as UnderlineIcon, Undo2, Unlink
 } from "lucide-react";
 import { useEffect, useRef, useState, type ClipboardEvent, type ReactNode } from "react";
-import { adminApiFetch, adminApiUrl } from "../shared/api/adminApi";
+import { adminApiFetch, adminApiUrl } from "@/api/admin";
 
 function escapeHtml(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");

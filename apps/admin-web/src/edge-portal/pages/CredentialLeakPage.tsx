@@ -16,7 +16,7 @@ import {
   type CredentialLeakRecord,
   type CredentialSubscription,
 } from "@sentinel/shared";
-import { Button, EmptyState } from "@sentinel/ui";
+import { Button, EmptyState } from "@/components/common";
 
 import { moduleConfigs, type ModuleConfig } from "../config/modules";
 import { portalSessionKey } from "../app/PortalShell";

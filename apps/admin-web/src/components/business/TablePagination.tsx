@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Button } from "@sentinel/ui";
+import { Button } from "@/components/common";
 
 type PaginationResetKey = string | number | boolean | null | undefined;
 

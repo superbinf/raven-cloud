@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowLeft, Eye, File, FilePenLine, LoaderCircle, Paperclip, Save, Send, Trash2, Upload } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { DarkWebFileRecord, ManagedIngestionRecord, MonitoringTarget } from "@sentinel/shared";
-import { Button, Tag } from "@sentinel/ui";
-import { useCustomerScope } from "../app/CustomerScopeLayout";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
-import { ArticleEditor } from "../components/ArticleEditor";
-import { PageHeader, Toast, type ToastState } from "../components/AdminPrimitives";
-import { adminApiFetch as apiFetch, adminApiUrl } from "../shared/api/adminApi";
+import { Button, Tag } from "@/components/common";
+import { useCustomerScope } from "@/layouts";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
+import { ArticleEditor } from "@/components/business/ArticleEditor";
+import { PageHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
+import { adminApiFetch as apiFetch, adminApiUrl } from "@/api/admin";
 
 type EditorPane = "edit" | "preview";
 

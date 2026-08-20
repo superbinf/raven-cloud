@@ -1,4 +1,4 @@
-import { useCustomerScope } from "../app/CustomerScopeLayout";
+import { useCustomerScope } from "@/layouts";
 
 export function TenantPortalPage({ tenantId }: { tenantId: string }) {
   const scope = useCustomerScope();

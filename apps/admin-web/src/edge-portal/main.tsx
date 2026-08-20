@@ -1,7 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { HashRouter } from "react-router-dom";
-import { GlobalErrorBoundary, initializeUiTheme } from "@sentinel/ui";
+import { GlobalErrorBoundary, initializeUiTheme } from "@/components/common";
+import "@/assets/styles/globals.css";
 import "@sentinel/ui/styles.css";
 import "./portal.css";
 import "./changan-theme.css";

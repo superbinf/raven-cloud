@@ -14,7 +14,7 @@ import {
   type SensitiveRecord,
   type SensitiveRecordsPageResult,
 } from "@sentinel/shared";
-import { Button, EmptyState, Panel, RiskBadge, cn } from "@sentinel/ui";
+import { Button, EmptyState, Panel, RiskBadge, cn } from "@/components/common";
 
 import {
   sensitiveCategoryBySubtype,

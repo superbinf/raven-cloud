@@ -17,7 +17,7 @@ import {
   type CredentialApiTestResult,
   type MonitoringTarget,
 } from "@sentinel/shared";
-import { Button, Modal, Panel, StatusDot, Tag, cn } from "@sentinel/ui";
+import { Button, Modal, Panel, StatusDot, Tag, cn } from "@/components/common";
 import {
   DeleteConfirmation,
   PageHeader,
@@ -25,13 +25,13 @@ import {
   SequenceHeader,
   Toast,
   type ToastState,
-} from "../components/AdminPrimitives";
+} from "@/components/business/AdminPrimitives";
 import {
   TablePagination,
   useClientPagination,
-} from "../components/TablePagination";
-import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
-import { useAdminInitialLoading } from "../app/AdminInitialLoading";
+} from "@/components/business/TablePagination";
+import { adminApiFetch as apiFetch } from "@/api/admin";
+import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 
 export function InterfacesPage({
   canManage,

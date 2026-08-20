@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { KeyRound, Save, UserRound } from "lucide-react";
 import type { UserRecord } from "@sentinel/shared";
-import { Button, Panel, PasswordInput } from "@sentinel/ui";
-import { PageHeader, Toast, type ToastState } from "../components/AdminPrimitives";
-import { adminApiFetch as apiFetch } from "../shared/api/adminApi";
+import { Button, Panel, PasswordInput } from "@/components/common";
+import { PageHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
+import { adminApiFetch as apiFetch } from "@/api/admin";
 
 export function ProfilePage({ onProfileUpdated }: { onProfileUpdated: (user: UserRecord) => void }) {
   const [profile, setProfile] = useState<UserRecord | null>(null);

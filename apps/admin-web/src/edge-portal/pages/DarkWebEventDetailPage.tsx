@@ -17,7 +17,7 @@ import {
   type DarkWebFilePreview,
   type DarkWebFileRecord,
 } from "@sentinel/shared";
-import { Button, EmptyState, IconButton, Panel, Tag } from "@sentinel/ui";
+import { Button, EmptyState, IconButton, Panel, Tag } from "@/components/common";
 
 import { readPortalSession } from "../app/PortalShell";
 import {

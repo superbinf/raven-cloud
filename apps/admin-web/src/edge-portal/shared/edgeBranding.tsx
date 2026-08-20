@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { cn } from "@sentinel/ui";
+import { cn } from "@/components/common";
 import { cloudPortalTenantChangedEvent, portalApiFetch } from "./api/portalApi";
 
 const trimmedLogoCache = new Map<string, Promise<string>>();

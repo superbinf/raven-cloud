@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AlertTriangle, CloudDownload, HardDrive, Plus, RefreshCw, Trash2, Wifi, WifiOff } from "lucide-react";
-import { Button, Modal, Panel, StatusDot, Tag } from "@sentinel/ui";
-import { PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "../../../components/AdminPrimitives";
+import { Button, Modal, Panel, StatusDot, Tag } from "@/components/common";
+import { PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { useEdgeDeployments } from "../hooks/useEdgeDeployments";
 import type { EdgeDeployment, EdgeDeploymentInput } from "../model/types";
 import { CredentialDeliveryPanel } from "../components/ActivationConfigPanel";
