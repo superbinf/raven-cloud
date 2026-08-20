@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Ban, CalendarClock, KeyRound, RefreshCw, RotateCw, ShieldCheck } from "lucide-react";
+import { Ban, CalendarClock, Download, KeyRound, RefreshCw, RotateCw, ShieldCheck } from "lucide-react";
 import { Button, Modal, Panel, StatusDot, Tag } from "@/components/common";
 import { PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { CredentialDeliveryPanel } from "../components/ActivationConfigPanel";
+import { downloadCloudTlsCertificate } from "../api/edgeDeploymentsApi";
 import { useEdgeDeployments } from "../hooks/useEdgeDeployments";
 import type { EdgeDeployment } from "../model/types";
 import styles from "../edgeDeployments.module.css";
@@ -39,11 +40,18 @@ export function CredentialManagementPage({ tenantId }: { tenantId?: string }) {
   const deployments = tenantId ? state.deployments.filter((deployment) => deployment.tenantId === tenantId) : state.deployments;
   const [editing, setEditing] = useState<{ deployment: EdgeDeployment; mode: "license" | "api-key" } | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
+  const [exportingCertificate, setExportingCertificate] = useState(false);
   const refresh = async () => {
     try { await state.load(); setToast({ tone: "success", text: "凭据状态已刷新" }); }
     catch (error) { setToast({ tone: "warning", text: error instanceof Error ? error.message : "刷新失败" }); }
   };
-  return <><PageHeader eyebrow="DEPLOYMENT CREDENTIALS" title="许可证与 API Key" description="按当前客户的地端实例管理许可证与 OpenAPI Key，不在此处维护账号泄露数据。" actions={<Button variant="secondary" onClick={() => void refresh()} disabled={state.loading}><RefreshCw size={16} />刷新状态</Button>} />
+  const exportCertificate = async () => {
+    setExportingCertificate(true);
+    try { await downloadCloudTlsCertificate(); setToast({ tone: "success", text: "云端 TLS 公共证书已导出" }); }
+    catch (error) { setToast({ tone: "warning", text: error instanceof Error ? error.message : "证书导出失败" }); }
+    finally { setExportingCertificate(false); }
+  };
+  return <><PageHeader eyebrow="DEPLOYMENT CREDENTIALS" title="许可证与 API Key" description="管理地端许可证、OpenAPI Key，并导出地端建立 HTTPS 信任所需的云端 TLS 公共证书。" actions={<><Button variant="secondary" title="导出云端当前加载的 TLS 公共证书，不包含私钥" onClick={() => void exportCertificate()} disabled={exportingCertificate}><Download size={16} />{exportingCertificate ? "导出中..." : "导出 TLS 证书"}</Button><Button variant="secondary" onClick={() => void refresh()} disabled={state.loading}><RefreshCw size={16} />刷新状态</Button></>} />
     <Panel>{state.loading ? <div className="inline-empty"><RefreshCw size={24} /><strong>正在加载凭据</strong></div> : <div className={styles.credentialTable}><div className={styles.credentialTableHead}><SequenceHeader /><span>地端实例</span><span>客户</span><span>许可证</span><span>OpenAPI Key</span><span>操作</span></div>{deployments.map((deployment, index) => <div className={styles.credentialTableRow} key={deployment.id}><SequenceCell value={index + 1} /><div><strong>{deployment.name}</strong><small>{deployment.id}</small></div><div><strong>{deployment.tenantName || deployment.tenantId}</strong><small>{deployment.tenantId}</small></div><div><StatusDot label={licenseLabel(deployment.license.status)} tone={deployment.license.status === "active" ? "success" : "muted"} /><small>{deployment.license.expiresAt ? `至 ${formatTime(deployment.license.expiresAt)}` : "未设置有效期"}</small></div><div><Tag tone={deployment.apiKeyStatus === "active" ? "green" : "default"}>{deployment.apiKeyStatus === "active" ? "有效" : "已注销"}</Tag><small>v{deployment.apiKeyVersion} · {formatTime(deployment.apiKeyLastRotatedAt)}</small></div><div className={styles.actions}><button className="text-action" onClick={() => setEditing({ deployment, mode: "license" })}>管理许可证</button><button className="text-action" onClick={() => setEditing({ deployment, mode: "api-key" })}>管理 API Key</button></div></div>)}{!deployments.length && <div className="inline-empty"><KeyRound size={24} /><strong>当前客户暂无可管理的地端实例</strong></div>}</div>}</Panel>
     <Modal open={Boolean(editing)} title={editing ? `${editing.mode === "license" ? "许可证" : "API Key"} · ${editing.deployment.name}` : "凭据管理"} onClose={() => setEditing(null)}>{editing && <CredentialEditor key={`${editing.deployment.id}-${editing.mode}`} mode={editing.mode} deployment={editing.deployment} state={state} />}</Modal>
     <Modal open={Boolean(state.credentialDelivery)} title="一次性凭证交付" onClose={() => state.setCredentialDelivery(null)} footer={<Button onClick={() => state.setCredentialDelivery(null)}>我已安全保存</Button>}>{state.credentialDelivery && <CredentialDeliveryPanel delivery={state.credentialDelivery} />}</Modal>

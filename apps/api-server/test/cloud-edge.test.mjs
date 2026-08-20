@@ -148,6 +148,10 @@ test("云端部署凭证、租户隔离和可配置 API 快照形成闭环", asy
   assert.equal(login.status, 200, stderr);
   const admin = login.body.token;
   assert.equal((await request("/api/edge/deployments")).status, 401);
+  assert.equal((await request("/api/edge/cloud-tls-certificate")).status, 401);
+  const certificateWithoutTls = await request("/api/edge/cloud-tls-certificate", { token: admin });
+  assert.equal(certificateWithoutTls.status, 409);
+  assert.match(certificateWithoutTls.body.message, /未启用 TLS/u);
   assert.equal((await request("/api/edge/tenants", { token: admin })).status, 200);
   assert.equal((await request("/api/edge/tenants", { token: admin, method: "POST", body: JSON.stringify({ id: "TENANT-SECOND", name: "第二客户" }) })).status, 201);
   const database = new pg.Client({ connectionString: databaseUrl });

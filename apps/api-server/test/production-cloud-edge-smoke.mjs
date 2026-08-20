@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { deriveCaptchaAnswer } from "@sentinel/auth-captcha";
 
@@ -43,6 +44,14 @@ const login = expectStatus(await request("/api/auth/login", {
   })
 }), 200, "Cloud 管理员登录");
 const token = login.token;
+
+const exportedCertificate = expectStatus(await request("/api/edge/cloud-tls-certificate", { token, raw: true }), 200, "导出 Cloud TLS 证书");
+const exportedCertificateBody = Buffer.from(exportedCertificate.body);
+assert.match(exportedCertificate.headers.get("content-type") || "", /^application\/x-pem-file/u);
+assert.match(exportedCertificate.headers.get("content-disposition") || "", /sentinel-cloud-tls\.crt/u);
+assert.equal(exportedCertificate.headers.get("cache-control"), "no-store");
+assert.equal(exportedCertificate.headers.get("x-content-sha256"), createHash("sha256").update(exportedCertificateBody).digest("hex"));
+assert.match(exportedCertificateBody.toString("utf8"), /-----BEGIN CERTIFICATE-----/u);
 
 expectStatus(await request("/api/targets", { token }), 400, "缺失租户上下文必须拒绝");
 const primaryTenant = "TENANT-CHANGAN";

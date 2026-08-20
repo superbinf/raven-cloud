@@ -101,6 +101,8 @@ cd release\sentinel-cloud
 
 初始化管理员账号由 `SENTINEL_ADMIN_ACCOUNT` 和 `SENTINEL_ADMIN_PASSWORD` 创建。首次登录后应核对账号资料、按组织策略更新密码，并在账号管理中配置 TOTP。
 
+地端需要信任 Cloud 自签名证书或企业 CA 链时，可在“许可证与 API Key”页面点击“导出 TLS 证书”，下载 Cloud API 当前实际加载的公共证书；导出文件不包含私钥。
+
 ## 云端初始化顺序
 
 1. 登录 `/admin`，创建客户并选择当前客户范围。

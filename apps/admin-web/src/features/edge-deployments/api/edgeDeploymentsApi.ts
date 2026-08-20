@@ -1,8 +1,35 @@
-import { adminApiFetch } from "@/api/admin";
+import { adminApiFetch, adminApiRequestHeaders, adminApiUrl } from "@/api/admin";
 import type { EdgeActivationConfig, EdgeCredentialDelivery, EdgeDeployment, EdgeDeploymentInput, EdgeDeploymentStatus, EdgeSnapshotJob, EdgeTenant, EdgeLicense } from "../model/types";
 
 export function listEdgeTenants() {
   return adminApiFetch<EdgeTenant[]>("/api/edge/tenants");
+}
+
+export async function downloadCloudTlsCertificate() {
+  let response: Response;
+  try {
+    response = await fetch(adminApiUrl("/api/edge/cloud-tls-certificate"), {
+      headers: adminApiRequestHeaders({ Accept: "application/x-pem-file" })
+    });
+  } catch {
+    window.dispatchEvent(new Event("sentinel:system-error"));
+    throw new Error("服务暂时不可用，请稍后重试");
+  }
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({})) as { message?: string };
+    if (response.status >= 500) window.dispatchEvent(new Event("sentinel:system-error"));
+    throw new Error(response.status >= 500 ? "服务暂时不可用，请稍后重试" : payload.message || "证书导出失败");
+  }
+  const certificate = await response.blob();
+  if (!certificate.size) throw new Error("云端返回了空证书");
+  const url = URL.createObjectURL(certificate);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "sentinel-cloud-tls.crt";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
 
 export function createEdgeTenant(name: string) {

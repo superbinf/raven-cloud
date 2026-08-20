@@ -5,7 +5,7 @@ import { createCloudEdgeService } from "./service.mjs";
 import { createFilesystemSnapshotStorage } from "./storage/filesystem.mjs";
 import { createS3SnapshotStorage } from "./storage/s3.mjs";
 
-export function createCloudEdgeModule({ db, dataDir, legacyDataDir, masterSecret, encryptSecret, decryptSecret, publicBaseUrl, readJson, requirePermission, readFileObject, snapshotJobs, repository: providedRepository, env = process.env }) {
+export function createCloudEdgeModule({ db, dataDir, legacyDataDir, masterSecret, encryptSecret, decryptSecret, publicBaseUrl, tlsCertificate, readJson, requirePermission, readFileObject, snapshotJobs, repository: providedRepository, env = process.env }) {
   const repository = providedRepository || createCloudEdgeRepository(db);
   const localStorage = createFilesystemSnapshotStorage({
     rootDir: env.SENTINEL_SNAPSHOT_DIR || join(dataDir, "edge-snapshots"),
@@ -28,6 +28,6 @@ export function createCloudEdgeModule({ db, dataDir, legacyDataDir, masterSecret
     service,
     localStorage,
     objectStorage,
-    handle: createCloudEdgeRoutes({ service, repository, localStorage, readJson, requirePermission })
+    handle: createCloudEdgeRoutes({ service, repository, localStorage, tlsCertificate, readJson, requirePermission })
   };
 }

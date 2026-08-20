@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { promisify } from "node:util";
 import { constants as zlibConstants, gzip } from "node:zlib";
 import { deploymentCredentials } from "./auth.mjs";
@@ -32,7 +33,7 @@ async function writeFileBuffer(req, res, file) {
   res.end(body);
 }
 
-export function createCloudEdgeRoutes({ service, repository, localStorage, readJson, requirePermission }) {
+export function createCloudEdgeRoutes({ service, repository, localStorage, tlsCertificate, readJson, requirePermission }) {
   async function admin(req, res) {
     return requirePermission(req, res, "operations:manage");
   }
@@ -78,6 +79,17 @@ export function createCloudEdgeRoutes({ service, repository, localStorage, readJ
         writeJson(res, 200, await service.deleteTenant(decodeURIComponent(tenantMatch[1]), await readJson(req))); return true;
       }
       if (!await admin(req, res)) return true;
+      if (req.method === "GET" && url.pathname === "/api/edge/cloud-tls-certificate") {
+        if (!tlsCertificate) { writeJson(res, 409, { message: "云端当前未启用 TLS 证书，无法导出" }); return true; }
+        const content = Buffer.isBuffer(tlsCertificate) ? tlsCertificate : Buffer.from(tlsCertificate);
+        await writeFileBuffer(req, res, {
+          content,
+          name: "sentinel-cloud-tls.crt",
+          mediaType: "application/x-pem-file",
+          sha256: createHash("sha256").update(content).digest("hex")
+        });
+        return true;
+      }
       const snapshotJobMatch = url.pathname.match(/^\/api\/edge\/snapshot-jobs\/([^/]+)$/);
       if (snapshotJobMatch && req.method === "GET") { writeJson(res, 200, await service.snapshotJob(snapshotJobMatch[1])); return true; }
       if (req.method === "GET" && url.pathname === "/api/edge/deployments") { writeJson(res, 200, await service.listDeployments()); return true; }

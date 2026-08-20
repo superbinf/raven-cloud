@@ -1924,6 +1924,7 @@ const cloudEdge = createCloudEdgeModule({
   encryptSecret: encrypt,
   decryptSecret: decrypt,
   publicBaseUrl,
+  tlsCertificate: transportSecurity.serverOptions?.cert || null,
   readJson,
   requirePermission,
   async readFileObject({ tenantId, id }) {
