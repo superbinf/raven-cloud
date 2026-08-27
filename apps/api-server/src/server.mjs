@@ -15,6 +15,7 @@ import { readDarkWebBlobFromDirectories, storePlainDarkWebBlob } from "./dark-we
 import { ARTICLE_IMAGE_UPLOAD_MAX_BYTES, externalizeArticleImages, optimizeArticleImage, readArticleImage, readArticleImageFromDirectories, storeArticleImage } from "./article-images.mjs";
 import { createSecretCodec } from "./app/secret-codec.mjs";
 import { createPublicErrorResponse } from "./app/error-response.mjs";
+import { cloudSwaggerHtml, createCloudOpenApiDocument } from "./app/openapi.mjs";
 import { createStaticSiteHandler } from "./app/static-site.mjs";
 import { createCloudEdgeModule } from "./modules/cloud-edge/index.mjs";
 import { createSnapshotJobQueue } from "./modules/cloud-edge/job-queue.mjs";
@@ -78,6 +79,8 @@ const publicBaseUrl = assertEncryptedHttpUrl(
   process.env.SENTINEL_PUBLIC_BASE_URL || `${transportSecurity.protocol}://127.0.0.1:${port}`,
   { label: "SENTINEL_PUBLIC_BASE_URL", allowLoopbackHttp: process.env.NODE_ENV !== "production" }
 ).toString().replace(/\/$/, "");
+const apiDocsEnabled = !["0", "false", "no", "off"].includes(String(process.env.SENTINEL_API_DOCS_ENABLED || "true").trim().toLowerCase());
+const cloudOpenApiDocument = createCloudOpenApiDocument({ serverUrl: publicBaseUrl });
 const secret = resolveMasterSecret(process.env.SENTINEL_SECRET, {
   nodeEnv: process.env.NODE_ENV,
   name: "SENTINEL_SECRET",
@@ -2062,6 +2065,24 @@ const requestHandler = async (req, res) => {
   res.setHeader("X-Request-Id", auditRequestId);
   res.once("finish", () => { void writeAuditLog(req, res, url, auditRequestId).catch((error) => console.error("写入审计日志失败", error)); });
   try {
+    if (req.method === "GET" && url.pathname === "/openapi.json") {
+      if (!apiDocsEnabled) return json(res, 404, { message: "接口不存在" });
+      res.setHeader("Cache-Control", "no-store");
+      return json(res, 200, cloudOpenApiDocument);
+    }
+    if (req.method === "GET" && url.pathname === "/docs") {
+      if (!apiDocsEnabled) return json(res, 404, { message: "接口不存在" });
+      const body = cloudSwaggerHtml();
+      res.writeHead(200, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Length": Buffer.byteLength(body),
+        "Cache-Control": "no-store",
+        "Content-Security-Policy": "default-src 'self'; img-src 'self' data: https://validator.swagger.io; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self'",
+        "X-Content-Type-Options": "nosniff"
+      });
+      res.end(body);
+      return;
+    }
     if (req.method === "GET" && url.pathname === "/health") {
       try { await db.prepare("SELECT 1 AS ok").get(); return json(res, 200, { ok: true, service: "sentinel-api-server" }); }
       catch { return json(res, 503, { ok: false, service: "sentinel-api-server" }); }

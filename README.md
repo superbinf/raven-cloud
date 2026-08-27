@@ -98,6 +98,8 @@ cd release\sentinel-cloud
 
 - 运营后台：`https://<SENTINEL_PUBLIC_BASE_URL 主机>:<端口>/admin`
 - 健康检查：`https://<SENTINEL_PUBLIC_BASE_URL 主机>:<端口>/health`
+- Swagger UI：`https://<SENTINEL_PUBLIC_BASE_URL 主机>:<端口>/docs`
+- OpenAPI JSON：`https://<SENTINEL_PUBLIC_BASE_URL 主机>:<端口>/openapi.json`
 
 初始化管理员账号由 `SENTINEL_ADMIN_ACCOUNT` 和 `SENTINEL_ADMIN_PASSWORD` 创建。首次登录后应核对账号资料、按组织策略更新密码，并在账号管理中配置 TOTP。
 
@@ -126,6 +128,7 @@ cd release\sentinel-cloud
 | `SENTINEL_ADMIN_*` | 初始化平台管理员账号 |
 | `SENTINEL_PORTAL_*` | 初始化情报分析账号 |
 | `SENTINEL_PUBLIC_BASE_URL` | 地端访问的云端外部 HTTPS 根地址，必须与证书 SAN 匹配 |
+| `SENTINEL_API_DOCS_ENABLED` | 是否开放 `/docs` 和 `/openapi.json`，默认 `true`；生产环境可按安全策略关闭 |
 | `SENTINEL_TLS_CERT_HOST_PATH` / `SENTINEL_TLS_KEY_HOST_PATH` | 宿主机 TLS 证书链和私钥绝对路径 |
 | `WATCHVULN_FEED_TOKEN` | 可选 WatchVuln Feed 访问令牌 |
 
