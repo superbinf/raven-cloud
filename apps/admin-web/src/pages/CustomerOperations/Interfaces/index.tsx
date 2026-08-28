@@ -17,7 +17,7 @@ import {
   type CredentialApiTestResult,
   type MonitoringTarget,
 } from "@sentinel/shared";
-import { Button, Modal, Panel, StatusDot, Tag, cn } from "@/components/common";
+import { Button, Modal, Panel, StatusDot, Tag, cn } from "@/components/ui";
 import {
   DeleteConfirmation,
   PageHeader,

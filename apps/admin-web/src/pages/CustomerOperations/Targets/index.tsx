@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Globe2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { type MonitoringTarget } from "@sentinel/shared";
-import { Button, IconButton, Modal, Panel, Tag } from "@/components/common";
+import { Button, IconButton, Modal, Panel, Tag } from "@/components/ui";
 import {
   DeleteConfirmation,
   PageHeader,

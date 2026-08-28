@@ -1,0 +1,40 @@
+node_modules
+apps/api-server/data/*.db
+apps/api-server/data/*.db-*
+.npm-cache
+.superpowers/
+dist
+.DS_Store
+*.log
+*.swp
+.env
+.env.local
+.env.development
+.env.edge
+/activation.json
+**/license-activation.json
+apps/api-server/data/edge-snapshots/
+apps/api-server/data/dark-web/blobs/
+*.dump
+coverage
+.runtime
+data/edge/
+templates/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Python local environments and tool caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# one-click deploy artifacts (see docs/superpowers/specs/2026-07-29-one-click-deploy-design.md)
+.deploy/
+.env.deploy
+.env.production
+.env.edge.production
+*.tar.gz
+offline-packages/

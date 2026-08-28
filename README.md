@@ -1,8 +1,18 @@
-# Sentinel Cloud 生产包
+# Raven Cloud
 
-`sentinel-cloud` 是 Sentinel 威胁情报平台的云端运营生产包。它负责租户与账号管理、监测对象和数据源配置、情报录入与审核、第三方采集、任务调度、地端部署管理，以及面向地端发布签名加密快照。
+Raven Cloud 是可独立构建和部署的云端暴露面与威胁情报运营平台。它负责租户与账号管理、监测对象和数据源配置、情报录入与审核、第三方采集、任务调度、Raven 部署管理，以及向地端发布签名加密快照。
 
-本包只包含云端组件，不包含地端 Portal 和 Edge Server。地端已迁移到独立 [Raven 仓库](https://github.com/superbinf/raven)；2026-08-28 验收基线为 `5d6e81b552bf7b3fe822746ad4a48f6aa35e519d`。
+本仓库包含完整的管理前端、Cloud API、后台 Worker、数据库迁移、容器编排、本地开发和离线交付入口，不依赖原 `sti-platform` 仓库才能构建或运行。地端位于独立 [Raven 仓库](https://github.com/superbinf/raven)；2026-08-28 验收基线为 `5d6e81b552bf7b3fe822746ad4a48f6aa35e519d`。
+
+| 迁移信息 | 值 |
+| --- | --- |
+| 原仓库 | [`superbinf/sti-platform`](https://github.com/superbinf/sti-platform) |
+| 原路径 | `sentinel-cloud/` |
+| 源码迁移基线 | `eccf187a70aaf7c8bdfad6b7a3eb880745d3b48c` |
+| 独立仓库 | [`superbinf/raven-cloud`](https://github.com/superbinf/raven-cloud) |
+| 迁移日期 | 2026-08-28 |
+
+> 兼容性说明：新构建镜像和离线包使用 `raven-cloud` 标识。为保证现有部署可平滑迁移，Compose 项目名、数据卷、`SENTINEL_*` 环境变量、`@sentinel/*` 包名以及 `sentinel-cloud-edge` 加密协议标识暂时保留；迁移仓库不会创建第二份业务真源或要求重建现有数据库。
 
 ## 包内组件
 
@@ -35,6 +45,43 @@
 5. 地端使用 OpenAPI Key 通过 HTTPS/TLS 1.3 拉取配置、许可证和最新快照。携带 ETag 时，版本未变化返回 `304`。
 6. 地端验证身份、Manifest、SHA-256、签名和加密内容后，在单个 PostgreSQL 事务中原子替换只读投影；失败时继续服务上一成功版本。
 7. 地端向云端回报同步状态和心跳。地端 Portal 只读取本地数据库和文件，不依赖用户请求实时访问云端。
+
+## 本地开发与 Raven 联调
+
+首次启动会生成权限为 `0600` 的 `.env.development`，安装锁定依赖，并启动 PostgreSQL、Redis、Cloud API、全角色 Worker 和 Vite 管理后台：
+
+```bash
+git clone https://github.com/superbinf/raven-cloud.git
+cd raven-cloud
+make dev-init
+make dev
+```
+
+默认入口：
+
+- 管理后台：`http://127.0.0.1:5174/admin`
+- Cloud API：`http://127.0.0.1:8787`
+- Swagger UI：`http://127.0.0.1:8787/docs`
+- OpenAPI JSON：`http://127.0.0.1:8787/openapi.json`
+
+Raven 在另一个目录按其 README 启动，地端 Cloud Provider 地址填写 `http://127.0.0.1:8787`。Cloud 创建部署后一次性交付许可证和 OpenAPI Key，发布快照，再由 Raven Worker 执行首次同步。
+
+```bash
+make dev-status
+make dev-logs
+make dev-down
+```
+
+## 完整离线包
+
+```bash
+make offline-amd64 VERSION=0.3.1
+make offline-arm64 VERSION=0.3.1
+make offline-plan VERSION=0.3.1
+make offline-test
+```
+
+离线包、镜像和入口脚本均使用 `raven-cloud` 名称；目标服务器不需要 Node.js 或 npm。
 
 ## 环境要求
 
@@ -71,7 +118,7 @@
 ### Linux / macOS
 
 ```bash
-cd release/sentinel-cloud
+cd raven-cloud
 ./scripts/cloud-docker.sh init
 ```
 
@@ -85,7 +132,7 @@ cd release/sentinel-cloud
 ### Windows PowerShell
 
 ```powershell
-cd release\sentinel-cloud
+cd raven-cloud
 .\scripts\cloud-docker.ps1 init
 # 编辑 .env.production
 .\scripts\cloud-docker.ps1 config

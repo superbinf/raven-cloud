@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Check, CircleAlert, Clock3, History, KeyRound, LockKeyhole, Minus, Plus, Save, ShieldCheck } from "lucide-react";
 import type { PasswordPolicy } from "@sentinel/shared";
-import { Button, IconButton } from "@/components/common";
+import { Button, IconButton } from "@/components/ui";
 import { PageHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { adminApiFetch as apiFetch } from "@/api/admin";
 

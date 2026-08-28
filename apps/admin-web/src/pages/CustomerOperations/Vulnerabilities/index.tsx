@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Bug, Download, FileSpreadsheet, Pencil, Plus, Search, Send, Trash2, Upload } from "lucide-react";
 import type { MonitoringTarget, RiskLevel, VulnerabilityPageResult, VulnerabilityRecord } from "@sentinel/shared";
-import { Button, EmptyState, Modal, Panel, RiskBadge, Tag } from "@/components/common";
+import { Button, EmptyState, Modal, Panel, RiskBadge, Tag } from "@/components/ui";
 import { DeleteConfirmation, PageHeader, SelectionCell, SelectionHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { adminApiFetch as apiFetch } from "@/api/admin";
 import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";

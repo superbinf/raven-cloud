@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { HashRouter } from "react-router-dom";
-import { GlobalErrorBoundary, initializeUiTheme } from "@/components/common";
+import { GlobalErrorBoundary, initializeUiTheme } from "@/components/ui";
 import "@/assets/styles/globals.css";
 import "@sentinel/ui/styles.css";
 import "./portal.css";

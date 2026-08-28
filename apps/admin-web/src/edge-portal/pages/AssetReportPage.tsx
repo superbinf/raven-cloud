@@ -28,7 +28,7 @@ import {
   type HtmlReportSection,
   type HtmlReportSectionResult,
 } from "@sentinel/shared";
-import { Button, EmptyState, Panel, Tag, cn } from "@/components/common";
+import { Button, EmptyState, Panel, Tag, cn } from "@/components/ui";
 
 import {
   CountryFlag,

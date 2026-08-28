@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Ban, CirclePlay, PauseCircle, Plus, RefreshCw, ServerCog, Trash2 } from "lucide-react";
 import type { WorkerNode, WorkerNodeDesiredState } from "@sentinel/shared";
-import { Button, Modal, Panel, StatusDot, Tag } from "@/components/common";
+import { Button, Modal, Panel, StatusDot, Tag } from "@/components/ui";
 import { DeleteConfirmation, PageHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { adminApiFetch as apiFetch } from "@/api/admin";
 

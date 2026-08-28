@@ -1,5 +1,5 @@
 {
-  "name": "sentinel-threat-intelligence-platform",
+  "name": "raven-cloud",
   "private": true,
   "version": "0.1.0",
   "workspaces": [
@@ -18,8 +18,8 @@
     "start:worker:snapshot": "npm run start:worker:snapshot -w @sentinel/api-server",
     "start:worker:io": "npm run start:worker:io -w @sentinel/api-server",
     "start:worker:maintenance": "npm run start:worker:maintenance -w @sentinel/api-server",
-    "db:up": "docker compose up -d postgres redis",
-    "db:down": "docker compose stop postgres redis",
+    "db:up": "docker compose --env-file .env.development -f docker-compose.cloud.development.yml up -d postgres redis",
+    "db:down": "docker compose --env-file .env.development -f docker-compose.cloud.development.yml stop postgres redis",
     "watchvuln:up": "docker compose --profile vulnerability-feed up -d --build watchvuln",
     "watchvuln:down": "docker compose --profile vulnerability-feed stop watchvuln",
     "prod:init": "node scripts/production.mjs init",

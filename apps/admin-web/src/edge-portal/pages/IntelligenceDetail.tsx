@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, Box, CircleAlert, Globe2, Network, ShieldCheck } from "lucide-react";
 import { type IntelligenceItem } from "@sentinel/shared";
-import { EmptyState, Panel, RiskBadge, Tag } from "@/components/common";
+import { EmptyState, Panel, RiskBadge, Tag } from "@/components/ui";
 
 import { confidenceLabel, intelligenceDetailPath } from "../lib/intelligence";
 import { portalApiFetch as apiFetch } from "../shared/api/portalApi";

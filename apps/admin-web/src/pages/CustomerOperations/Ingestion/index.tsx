@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 
 import { AlertTriangle, CheckCircle2, Download, Eye, FileStack, LoaderCircle, UploadCloud, X } from "lucide-react";
 import { type IngestionBatch, type IngestionType, type MonitoringTarget } from "@sentinel/shared";
-import { Button, Modal, Panel, Tag } from "@/components/common";
+import { Button, Modal, Panel, Tag } from "@/components/ui";
 import { PageHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { IngestionRecordManager } from "@/components/business/IngestionRecordManager";
 import { adminApiFetch as apiFetch, adminApiRequestHeaders, adminApiUrl } from "@/api/admin";

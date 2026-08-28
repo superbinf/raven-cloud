@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Activity, CalendarPlus, ChevronRight, Database, FileKey, Globe2, Network, Radar, RefreshCw, Search, TriangleAlert } from "lucide-react";
 import { type IntelligenceItem, type Metric, type TodayModuleKey } from "@sentinel/shared";
 import type { EdgePortalModule } from "@sentinel/contracts";
-import { Button, EmptyState, Panel, RiskBadge, Tag } from "@/components/common";
+import { Button, EmptyState, Panel, RiskBadge, Tag } from "@/components/ui";
 import { ThreatTrendChart } from "../charts";
 
 import { usePortalDashboard } from "../hooks/usePortalDashboard";

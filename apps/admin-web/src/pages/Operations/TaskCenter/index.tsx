@@ -20,7 +20,7 @@ import {
   type BackgroundRunState,
   type CollectionJob,
 } from "@sentinel/shared";
-import { Button, Modal, Panel, StatusDot, Tag } from "@/components/common";
+import { Button, Modal, Panel, StatusDot, Tag } from "@/components/ui";
 import {
   PageHeader,
   SequenceCell,

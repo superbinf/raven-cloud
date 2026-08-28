@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Database, FilePenLine, Pencil, Plus, Search, Send, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { type IngestionType, type ManagedIngestionRecord, type ManagedIngestionRecordsPageResult, type MonitoringTarget, type RiskLevel } from "@sentinel/shared";
-import { Button, Modal, Panel, RiskBadge, Tag } from "@/components/common";
+import { Button, Modal, Panel, RiskBadge, Tag } from "@/components/ui";
 import { DeleteConfirmation, SelectionCell, SelectionHeader, SequenceCell, SequenceHeader, type ToastState } from "@/components/business/AdminPrimitives";
 import { TablePagination } from "@/components/business/TablePagination";
 import { adminApiFetch as apiFetch } from "@/api/admin";

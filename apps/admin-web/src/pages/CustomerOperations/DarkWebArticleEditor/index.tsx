@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowLeft, Eye, File, FilePenLine, LoaderCircle, Paperclip, Save, Send, Trash2, Upload } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { DarkWebFileRecord, ManagedIngestionRecord, MonitoringTarget } from "@sentinel/shared";
-import { Button, Tag } from "@/components/common";
+import { Button, Tag } from "@/components/ui";
 import { useCustomerScope } from "@/layouts";
 import { useAdminInitialLoading } from "@/hooks/useAdminInitialLoading";
 import { ArticleEditor } from "@/components/business/ArticleEditor";

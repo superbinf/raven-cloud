@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { cn } from "@/components/common";
+import { cn } from "@/components/ui";
 import { cloudPortalTenantChangedEvent, portalApiFetch } from "./api/portalApi";
 
 const trimmedLogoCache = new Map<string, Promise<string>>();

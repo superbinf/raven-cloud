@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: sentinel
+          POSTGRES_USER: sentinel
+          POSTGRES_PASSWORD: sentinel-local-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sentinel -d sentinel"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgresql://sentinel:sentinel-local-password@127.0.0.1:5432/sentinel
+      REDIS_URL: redis://127.0.0.1:6379
+      SENTINEL_SECRET: raven-cloud-ci-secret-at-least-32-characters
+      SENTINEL_ADMIN_ACCOUNT: operator
+      SENTINEL_ADMIN_PASSWORD: Admin-Test-Password-2026!
+      SENTINEL_PORTAL_ACCOUNT: analyst
+      SENTINEL_PORTAL_PASSWORD: Portal-Test-Password-2026!
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          npm ci --include=optional
+          make dev-init
+          make dev-install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+      - name: Validate offline delivery
+        run: make offline-test && make offline-plan VERSION=0.3.1
+
+      - name: Validate production Compose
+        run: |
+          cp .env.production.example .env.production
+          docker compose --env-file .env.production -f docker-compose.cloud.production.yml config --quiet

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Ban, CalendarClock, Download, KeyRound, RefreshCw, RotateCw, ShieldCheck } from "lucide-react";
-import { Button, Modal, Panel, StatusDot, Tag } from "@/components/common";
+import { Button, Modal, Panel, StatusDot, Tag } from "@/components/ui";
 import { PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { CredentialDeliveryPanel } from "../components/ActivationConfigPanel";
 import { downloadCloudTlsCertificate } from "../api/edgeDeploymentsApi";

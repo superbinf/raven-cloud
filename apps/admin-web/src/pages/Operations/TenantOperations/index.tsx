@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Archive, KeyRound, Pencil, Plus, RefreshCw, Save, Send, ShieldCheck, Trash2 } from "lucide-react";
 import type { CredentialLeakPageResult, CredentialLeakRecord, CredentialSubscription, PublicationModule, TenantPublicationPolicy } from "@sentinel/shared";
-import { Button, IconButton, Modal, Panel, Tag } from "@/components/common";
+import { Button, IconButton, Modal, Panel, Tag } from "@/components/ui";
 import { DeleteConfirmation, PageHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { adminApiFetch as apiFetch } from "@/api/admin";
 

@@ -1,7 +1,7 @@
 name: sentinel-cloud
 
 x-cloud-app: &cloud-app
-  image: sentinel-cloud:${SENTINEL_IMAGE_TAG:-local}
+  image: raven-cloud:${SENTINEL_IMAGE_TAG:-local}
   restart: unless-stopped
   env_file:
     - ${SENTINEL_CLOUD_ENV_FILE:-.env.production}
@@ -49,7 +49,7 @@ services:
       retries: 30
 
   cloud-migrate:
-    image: sentinel-cloud:${SENTINEL_IMAGE_TAG:-local}
+    image: raven-cloud:${SENTINEL_IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: apps/api-server/Dockerfile

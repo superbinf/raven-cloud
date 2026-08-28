@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import type { Permission, UserRecord } from "@sentinel/shared";
-import { PlatformLoading } from "@/components/common";
+import { PlatformLoading } from "@/components/ui";
 import { AdminLayout, AdminLogin, CustomerScopeLayout, useCustomerScope } from "@/layouts";
 import { readAdminSession, useAdminSessionStore } from "@/store";
 import type { AdminSession } from "@/types";

@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { ArrowLeft, Building2, ChevronDown, ChevronRight, Menu, UserRound, X } from "lucide-react";
 import type { EdgePortalModule } from "@sentinel/contracts";
 import type { Permission } from "@sentinel/shared";
-import { IconButton, ThemeSwitcher, cn } from "@/components/common";
+import { IconButton, ThemeSwitcher, cn } from "@/components/ui";
 import { portalApiFetch, readCloudPortalTenantId, storeCloudPortalTenant } from "../shared/api/portalApi";
 import { EdgeBrandLogo, useEdgeBranding } from "../shared/edgeBranding";
 

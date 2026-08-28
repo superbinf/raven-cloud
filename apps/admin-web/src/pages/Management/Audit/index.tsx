@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { AlertTriangle, Archive, Bot, RefreshCw, Search } from "lucide-react";
-import { Button, Panel, StatusDot, Tag } from "@/components/common";
+import { Button, Panel, StatusDot, Tag } from "@/components/ui";
 import { PageHeader, SequenceCell, SequenceHeader } from "@/components/business/AdminPrimitives";
 import { TablePagination } from "@/components/business/TablePagination";
 import { adminApiFetch } from "@/api/admin";

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/common";
+import { Button } from "@/components/ui";
 
 type PaginationResetKey = string | number | boolean | null | undefined;
 

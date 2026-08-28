@@ -1,5 +1,5 @@
 import { CalendarPlus, Layers3, ListFilter } from "lucide-react";
-import { cn } from "@/components/common";
+import { cn } from "@/components/ui";
 
 export function TodayCountBadge({ count, className }: { count: number; className?: string }) {
   return <span className={cn("today-count-badge", count === 0 && "today-count-badge-empty", className)} aria-label={`今日新增 ${count} 条`}>+{count.toLocaleString("zh-CN")}</span>;

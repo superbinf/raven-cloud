@@ -9,7 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import type { FingerprintWatchGroup } from "@sentinel/shared";
-import { Button, EmptyState, IconButton, Modal, Panel, StatusDot, Tag } from "@/components/common";
+import { Button, EmptyState, IconButton, Modal, Panel, StatusDot, Tag } from "@/components/ui";
 import {
   DeleteConfirmation,
   PageHeader,

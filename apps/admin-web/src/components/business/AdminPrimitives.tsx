@@ -2,7 +2,7 @@ import { type ReactNode } from "react";
 
 import { Check, Trash2, X } from "lucide-react";
 import { type TrendPoint } from "@sentinel/shared";
-import { Button, IconButton, Modal, cn } from "@/components/common";
+import { Button, IconButton, Modal, cn } from "@/components/ui";
 import * as echarts from "echarts/core";
 import { BarChart, LineChart } from "echarts/charts";
 import { GridComponent, LegendComponent, TooltipComponent } from "echarts/components";

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { AlertTriangle, CheckCircle2, Database, Globe2, ImageIcon, Pencil, Plus, RefreshCw, Search, Trash2, Upload } from "lucide-react";
-import { Button, Modal, Panel, Tag } from "@/components/common";
+import { Button, Modal, Panel, Tag } from "@/components/ui";
 import { DeleteConfirmation, PageHeader, SequenceCell, SequenceHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { TablePagination } from "@/components/business/TablePagination";
 import { adminApiFetch as apiFetch, adminApiUrl } from "@/api/admin";

@@ -18,7 +18,7 @@ import {
   type IntelligencePageResult,
   type RiskLevel,
 } from "@sentinel/shared";
-import { Button, EmptyState, Panel, RiskBadge, Tag, cn } from "@/components/common";
+import { Button, EmptyState, Panel, RiskBadge, Tag, cn } from "@/components/ui";
 
 import { type ModuleConfig } from "../config/modules";
 

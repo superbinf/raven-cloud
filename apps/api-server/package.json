@@ -15,7 +15,7 @@
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed:fingerprint-icons": "node scripts/seed-fingerprint-icons.mjs",
     "db:migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test --test-concurrency=1 test/*.test.mjs"
   },
   "dependencies": {
     "@sentinel/auth-captcha": "*",

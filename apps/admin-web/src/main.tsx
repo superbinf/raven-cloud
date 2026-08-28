@@ -6,7 +6,7 @@ import "@sentinel/ui/styles.css";
 import "@/assets/styles/admin.css";
 import "@/assets/styles/changan-theme.css";
 import { AdminApp } from "@/App";
-import { GlobalErrorBoundary, initializeUiTheme } from "@/components/common";
+import { GlobalErrorBoundary, initializeUiTheme } from "@/components/ui";
 
 initializeUiTheme();
 

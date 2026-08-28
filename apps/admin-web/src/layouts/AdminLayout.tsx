@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { Activity, Archive, Bug, Building2, ChevronRight, CircleGauge, CircleUserRound, Clock3, Database, Eye, FileInput, Fingerprint, Globe2, HardDrive, ImageIcon, KeyRound, LayoutDashboard, ListTodo, LockKeyhole, LogIn, LogOut, Menu, PanelLeftClose, PanelLeftOpen, ServerCog, Settings, ShieldCheck, SlidersHorizontal, Users, Webhook } from "lucide-react";
 import { type Permission } from "@sentinel/shared";
-import { Button, CaptchaField, IconButton, PasswordInput, ThemeSwitcher, cn, type CaptchaChallenge, useLoginCaptcha } from "@/components/common";
+import { Button, CaptchaField, IconButton, PasswordInput, ThemeSwitcher, cn, type CaptchaChallenge, useLoginCaptcha } from "@/components/ui";
 import { adminApiFetch } from "@/api/admin";
 import type { AdminSession } from "@/types";
 import { useCustomerScope } from "./CustomerScopeLayout";

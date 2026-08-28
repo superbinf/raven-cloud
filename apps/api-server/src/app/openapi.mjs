@@ -219,7 +219,7 @@ export function createCloudOpenApiDocument({ serverUrl = "/" } = {}) {
   return {
     openapi: "3.1.0",
     info: {
-      title: "Sentinel Cloud API",
+      title: "Raven Cloud API",
       version: "0.1.0",
       description: "Sentinel 云端运营、采集、发布以及云地同步接口。管理接口使用 Bearer 会话令牌；地端接口使用部署级 OpenAPI Key。"
     },
@@ -269,7 +269,7 @@ export function cloudSwaggerHtml({ openApiUrl = "/openapi.json" } = {}) {
   const encodedUrl = JSON.stringify(openApiUrl).replace(/</gu, "\\u003c");
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sentinel Cloud API - Swagger UI</title>
+<title>Raven Cloud API - Swagger UI</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
 </head><body><div id="swagger-ui"></div>
 <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>

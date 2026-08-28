@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { KeyRound, Save, UserRound } from "lucide-react";
 import type { UserRecord } from "@sentinel/shared";
-import { Button, Panel, PasswordInput } from "@/components/common";
+import { Button, Panel, PasswordInput } from "@/components/ui";
 import { PageHeader, Toast, type ToastState } from "@/components/business/AdminPrimitives";
 import { adminApiFetch as apiFetch } from "@/api/admin";
 

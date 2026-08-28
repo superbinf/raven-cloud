@@ -12,7 +12,7 @@ import {
   type ApiConnection,
   type CollectionJob,
 } from "@sentinel/shared";
-import { Button, Modal, Panel, Tag } from "@/components/common";
+import { Button, Modal, Panel, Tag } from "@/components/ui";
 import {
   PageHeader,
   SequenceCell,

@@ -7,7 +7,7 @@ test("Cloud OpenAPI 描述管理接口和云地机器接口", () => {
   const document = createCloudOpenApiDocument({ serverUrl: "https://cloud.example.test" });
 
   assert.equal(document.openapi, "3.1.0");
-  assert.equal(document.info.title, "Sentinel Cloud API");
+  assert.equal(document.info.title, "Raven Cloud API");
   assert.deepEqual(document.servers, [{ url: "https://cloud.example.test" }]);
   assert.ok(cloudOpenApiRouteCatalog.length >= 80);
   assert.ok(document.paths["/api/ingestion/assets-html"].post);
