@@ -2,7 +2,7 @@
 
 `sentinel-cloud` 是 Sentinel 威胁情报平台的云端运营生产包。它负责租户与账号管理、监测对象和数据源配置、情报录入与审核、第三方采集、任务调度、地端部署管理，以及面向地端发布签名加密快照。
 
-本包只包含云端组件，不包含地端 Portal 和 Edge Server。地端部署使用同级目录中的 `release/sentinel-edge` 生产包。
+本包只包含云端组件，不包含地端 Portal 和 Edge Server。地端已迁移到独立 [Raven 仓库](https://github.com/superbinf/raven)；2026-08-28 验收基线为 `5d6e81b552bf7b3fe822746ad4a48f6aa35e519d`。
 
 ## 包内组件
 
