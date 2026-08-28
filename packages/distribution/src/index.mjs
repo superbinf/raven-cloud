@@ -22,6 +22,7 @@ const ENVELOPE_MAGIC = Buffer.from("SNTLEDG1", "ascii");
 const AES_KEY_BYTES = 32;
 const GCM_IV_BYTES = 12;
 const GCM_TAG_BYTES = 16;
+const GZIP_COMPATIBILITY_OS = 19;
 const DEFAULT_MAX_DECOMPRESSED_BYTES = 512 * 1024 * 1024;
 const HKDF_SALT = textEncoder.encode("sentinel-cloud-edge/v1/hkdf-salt");
 
@@ -98,7 +99,11 @@ export function parseCanonicalJson(input) {
 }
 
 export function gzipBytes(input) {
-  return Uint8Array.from(gzipSync(bytes(input, "input"), { level: 9, mtime: 0 }));
+  const compressed = Uint8Array.from(gzipSync(bytes(input, "input"), { level: 9, mtime: 0 }));
+  // zlib writes the host OS into byte 9 of the gzip header. Freeze the historic
+  // Cloud/Edge vector so Linux production and macOS development emit identical bytes.
+  compressed[9] = GZIP_COMPATIBILITY_OS;
+  return compressed;
 }
 
 export function gunzipBytes(input, { maxOutputBytes = DEFAULT_MAX_DECOMPRESSED_BYTES } = {}) {

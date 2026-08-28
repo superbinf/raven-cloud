@@ -41,6 +41,7 @@ test("shared vector fixes canonical, gzip, HKDF, encrypted content and manifest 
   const built = buildEncryptedSnapshot({ snapshot: snapshotVector, rootSecret: rootSecretVector, iv: ivVector });
 
   assert.equal(sha256Hex(canonical), expectedVector.canonicalSha256);
+  assert.equal(compressed[9], 19);
   assert.equal(sha256Hex(compressed), expectedVector.gzipSha256);
   assert.equal(Buffer.from(keys.contentEncryptionKey).toString("hex"), expectedVector.encryptionKeyHex);
   assert.equal(Buffer.from(keys.manifestHmacKey).toString("hex"), expectedVector.manifestKeyHex);
