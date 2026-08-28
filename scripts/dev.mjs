@@ -104,25 +104,25 @@ async function dependenciesHealthy(workspaceDir, probeModules) {
   }
 }
 
-function sharpLibvipsDependency(workspaceDir) {
+function sharpPlatformDependencies(workspaceDir) {
   const sharpPackagePath = join(workspaceDir, "node_modules", "sharp", "package.json");
-  if (!existsSync(sharpPackagePath)) return null;
+  if (!existsSync(sharpPackagePath)) return [];
   const sharpPackage = JSON.parse(readFileSync(sharpPackagePath, "utf8"));
   const libc = process.platform === "linux" && !process.report.getReport().header.glibcVersionRuntime ? "musl" : "";
   const suffix = process.platform === "linux"
     ? `linux${libc}-${process.arch}`
     : `${process.platform}-${process.arch}`;
-  const name = `@img/sharp-libvips-${suffix}`;
-  const version = sharpPackage.optionalDependencies?.[name];
-  return version ? `${name}@${version}` : null;
+  return [`@img/sharp-${suffix}`, `@img/sharp-libvips-${suffix}`]
+    .map((name) => sharpPackage.optionalDependencies?.[name] ? `${name}@${sharpPackage.optionalDependencies[name]}` : null)
+    .filter(Boolean);
 }
 
 async function repairPlatformDependencies(label, workspaceDir) {
   if (label !== "Cloud") return;
-  const dependency = sharpLibvipsDependency(workspaceDir);
-  if (!dependency) return;
-  console.log(`[dev] 安装当前平台的图像运行时依赖：${dependency}`);
-  await command("npm", ["install", "--no-save", dependency, "--cache", cacheDir], { cwd: workspaceDir });
+  const dependencies = sharpPlatformDependencies(workspaceDir);
+  if (!dependencies.length) return;
+  console.log(`[dev] 安装当前平台的图像运行时依赖：${dependencies.join("、")}`);
+  await command("npm", ["install", "--no-save", ...dependencies, "--cache", cacheDir], { cwd: workspaceDir });
 }
 
 async function ensureWorkspaceDependencies(label, workspaceDir, probeModules) {
